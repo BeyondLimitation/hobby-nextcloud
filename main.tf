@@ -1,41 +1,20 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = " ~> 3.5"
-    }
-  }
+provider "aws" {
+  region = "ap-northeast-2"
 }
 
-resource "aws_vpc" "vpc-nextcloud" {
-  cidr_block       = "10.10.0.0/16"
-  instance_tenancy = "default"
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "2.75.0"
 
-  enable_dns_support   = true
+  name = "nextcloud-terraform"
+
+  azs             = ["ap-northeast-2a", "ap-northeast-2b"]
+  cidr            = "10.10.0.0/16"
+  public_subnets  = ["10.10.0.0/18", "10.10.64.0/18"]
+  private_subnets = ["10.10.128.0/18", "10.10.192.0/18"]
+
   enable_dns_hostnames = true
-
-}
-
-resource "aws_subnet" "public-1" {
-  vpc_id                  = aws_vpc.vpc-nextcloud.id
-  cidr_block              = "10.10.0.0/18"
-  map_public_ip_on_launch = true
-}
-
-resource "aws_subnet" "public-2" {
-  vpc_id                  = aws_vpc.vpc-nextcloud.id
-  cidr_block              = "10.10.64.0/18"
-  map_public_ip_on_launch = true
-}
-
-resource "aws_subnet" "private-1" {
-  vpc_id     = aws_vpc.vpc-nextcloud.id
-  cidr_block = "10.10.128.0/18"
-}
-
-resource "aws_subnet" "private-2" {
-  vpc_id     = aws_vpc.vpc-nextcloud.id
-  cidr_block = "10.10.192.0/18"
+  enable_dns_support   = true
 }
 
 data "aws_ami" "ubuntu-bionic" {
@@ -51,12 +30,12 @@ data "aws_ami" "ubuntu-bionic" {
     values = ["hvm"]
   }
 
-  owners = ["099720109477"] # Canonical
+  owners = ["099720109477"]
 }
 
 resource "aws_instance" "simple1" {
   ami           = data.aws_ami.ubuntu-bionic.id
   instance_type = "t3.micro"
 
-  subnet_id = aws_subnet.public-1.id
+  subnet_id = module.vpc.public_subnets[0]
 }
