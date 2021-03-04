@@ -21,95 +21,41 @@ module "vpc" {
   enable_dns_support   = true
 }
 
-# Create Security groups #
-resource "aws_security_group" "allow-ssh" {
-  name        = "Allow_SSH"
-  description = "Allow SSH inbound traffic"
+# Security group module 
+module "nextcloud-ng" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "3.18.0"
+
+  name        = "nextcloud-ng"
+  description = "Security group for nextcloud application. Allow ssh, http/https and nfs traffics inbound and outbound"
   vpc_id      = module.vpc.vpc_id
 
-  ingress {
-    description = "Allow SSH traffic from everywhere"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # 인바운드 규칙
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+  ingress_rules       = ["https-443-tcp", "http-80-tcp", "ssh-tcp"]
+  ingress_with_cidr_blocks = [
+    { # Rule 1
+      rule        = "nfs-tcp"
+      cidr_blocks = "10.10.0.0/16"
+    }
+  ]
 
-  egress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # 아웃바운드 규칙
+  egress_cidr_blocks = ["0.0.0.0/0"]
+  egress_rules       = ["https-443-tcp", "http-80-tcp", "ssh-tcp"]
+  egress_with_cidr_blocks = [
+    { # Rule 1
+      rule        = "nfs-tcp"
+      cidr_blocks = "10.10.0.0/16"
+    }
+  ]
 }
-
-resource "aws_security_group" "allow-http" {
-  name        = "Allow_HTTP"
-  description = "Allow HTTP inbound traffic"
-  vpc_id      = module.vpc.vpc_id
-
-  ingress {
-    description = "Allow HTTP traffic from everywhere"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-resource "aws_security_group" "allow-https" {
-  name        = "Allow_HTTPS"
-  description = "Allow HTTPS inbound traffic"
-  vpc_id      = module.vpc.vpc_id
-
-  ingress {
-    description = "Allow HTTPS traffic from everywhere"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-resource "aws_security_group" "allow-nfs" {
-  name        = "Allow_NFS"
-  description = "Allow NFS inbound traffic"
-  vpc_id      = module.vpc.vpc_id
-
-  ingress {
-    description = "Allow NFS traffic from everywhere"
-    from_port   = 2049
-    to_port     = 2049
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 2049
-    to_port     = 2049
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
 
 #  Create EFS and EFS mount target  #
 
 resource "aws_efs_file_system" "efs4nextcloud" {
   creation_token = "efs4nextcloud"
-  encrypted      = false
+  encrypted      = true
 }
 
 resource "aws_efs_mount_target" "mount_target" {
@@ -140,6 +86,6 @@ resource "aws_instance" "simple1" {
   instance_type = "t3.micro"
   key_name      = "key4test"
 
-  subnet_id       = module.vpc.public_subnets[0]
-  security_groups = [aws_security_group.allow-ssh.id, aws_security_group.allow-http.id, aws_security_group.allow-https.id, aws_security_group.allow-nfs.id]
+  subnet_id = module.vpc.public_subnets[0]
+  security_groups = [module.nextcloud-ng.this_security_group_id]
 }
