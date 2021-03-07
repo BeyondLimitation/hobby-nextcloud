@@ -2,14 +2,6 @@ provider "aws" {
   region = "ap-northeast-2"
 }
 
-locals {
-  user_data = <<EOF
-#!/bin/bash
-sudo apt install -y nfs-common
-echo "nfs-common is installed!" > $HOME/yes.txt
-EOF
-}
-
 # Create VPC #
 
 module "vpc" {
@@ -94,6 +86,16 @@ data "aws_ami" "ubuntu-bionic" {
   owners = ["099720109477"]
 }
 
+# Cloud-init user_data
+data "template_cloudinit_config" "config" {
+  base64_encode = true
+
+  part {
+    content_type = "text/cloud-config"
+    content      = templatefile("./setting.tpl", {efs_mt_fqdn = aws_efs_mount_target.mount_target.dns_name})
+  }
+}
+
 resource "aws_instance" "simple1" {
   ami           = data.aws_ami.ubuntu-bionic.id
   instance_type = "t3.micro"
@@ -103,8 +105,12 @@ resource "aws_instance" "simple1" {
   security_groups = [module.nextcloud-ng.this_security_group_id]
   
   # Package setting
-  user_data_base64 = base64encode(local.user_data)
+  user_data_base64 = data.template_cloudinit_config.config.rendered
   tags = {
     Name = "시험용."
   }
+  # Wait Until EFS Mount target is ready
+  depends_on = [
+    aws_efs_mount_target.mount_target,
+  ]
 }
