@@ -2,6 +2,14 @@ provider "aws" {
   region = "ap-northeast-2"
 }
 
+locals {
+  user_data = <<EOF
+#!/bin/bash
+sudo apt install -y nfs-common
+echo "nfs-common is installed!" > $HOME/yes.txt
+EOF
+}
+
 # Create VPC #
 
 module "vpc" {
@@ -36,7 +44,11 @@ module "nextcloud-ng" {
   ingress_with_cidr_blocks = [
     { # Rule 1
       rule        = "nfs-tcp"
-      cidr_blocks = "10.10.0.0/16"
+      cidr_blocks = module.vpc.private_subnets_cidr_blocks[0]
+    },
+    { # Rule 2
+      rule        = "nfs-tcp"
+      cidr_blocks = module.vpc.public_subnets_cidr_blocks[0]
     }
   ]
 
@@ -46,7 +58,7 @@ module "nextcloud-ng" {
   egress_with_cidr_blocks = [
     { # Rule 1
       rule        = "nfs-tcp"
-      cidr_blocks = "10.10.0.0/16"
+      cidr_blocks = module.vpc.private_subnets_cidr_blocks[0]
     }
   ]
 }
@@ -61,6 +73,7 @@ resource "aws_efs_file_system" "efs4nextcloud" {
 resource "aws_efs_mount_target" "mount_target" {
   file_system_id = aws_efs_file_system.efs4nextcloud.id
   subnet_id      = module.vpc.private_subnets[0]
+  security_groups = [module.nextcloud-ng.this_security_group_id]
 }
 
 # Create EC2 Instance #
@@ -86,6 +99,12 @@ resource "aws_instance" "simple1" {
   instance_type = "t3.micro"
   key_name      = "key4test"
 
-  subnet_id = module.vpc.public_subnets[0]
+  subnet_id       = module.vpc.public_subnets[0]
   security_groups = [module.nextcloud-ng.this_security_group_id]
+  
+  # Package setting
+  user_data_base64 = base64encode(local.user_data)
+  tags = {
+    Name = "시험용."
+  }
 }
