@@ -21,6 +21,8 @@ module "vpc" {
   enable_dns_support   = true
 }
 
+# Create Security Group#
+
 # Security group module 
 module "nextcloud-ng" {
   source  = "terraform-aws-modules/security-group/aws"
@@ -55,6 +57,38 @@ module "nextcloud-ng" {
   ]
 }
 
+# Create IAM Role, Policy #
+
+# IAM Role. Only a specific EC2 Instance will assume this.
+data "aws_iam_policy_document" "EFS-AllowAll" {
+  statement {
+    # required
+    sid = "AllowEFSAccess"
+    # All elasticfilesystem actions.
+    actions = ["elasticfilesystem:*"]
+    # Allow
+    effect = "Allow"
+
+    resources = [aws_efs_mount_target.mount_target.file_system_arn]
+  }
+}
+
+resource "aws_iam_policy" "nextcloud-policy" {
+  name   = "EC2_NextCloudPolicy"
+  policy = data.aws_iam_policy_document.EFS-AllowAll.json
+
+}
+
+resource "aws_iam_role" "nextcloud-role" {
+  name               = "Nextcloud_InstanceRole"
+  assume_role_policy = file("./assumerolepolicy.json")
+}
+
+resource "aws_iam_role_policy_attachment" "attach" {
+  role       = aws_iam_role.nextcloud-role.name
+  policy_arn = aws_iam_policy.nextcloud-policy.arn
+}
+
 #  Create EFS and EFS mount target  #
 
 resource "aws_efs_file_system" "efs4nextcloud" {
@@ -63,9 +97,18 @@ resource "aws_efs_file_system" "efs4nextcloud" {
 }
 
 resource "aws_efs_mount_target" "mount_target" {
-  file_system_id = aws_efs_file_system.efs4nextcloud.id
-  subnet_id      = module.vpc.private_subnets[0]
+  file_system_id  = aws_efs_file_system.efs4nextcloud.id
+  subnet_id       = module.vpc.private_subnets[0]
   security_groups = [module.nextcloud-ng.this_security_group_id]
+}
+
+resource "aws_efs_file_system_policy" "nextcloud_policy" {
+  file_system_id = aws_efs_file_system.efs4nextcloud.id
+
+  policy = templatefile("./efs-policy.json.tpl", { nextcloud-role = aws_iam_role.nextcloud-role.arn, efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn })
+  depends_on = [
+    aws_iam_role.nextcloud-role
+  ]
 }
 
 # Create EC2 Instance #
@@ -92,7 +135,7 @@ data "template_cloudinit_config" "config" {
 
   part {
     content_type = "text/cloud-config"
-    content      = templatefile("./setting.tpl", {efs_mt_fqdn = aws_efs_mount_target.mount_target.dns_name})
+    content      = templatefile("./setting.tpl", { efs_mt_fqdn = aws_efs_mount_target.mount_target.dns_name })
   }
 }
 
@@ -103,7 +146,7 @@ resource "aws_instance" "simple1" {
 
   subnet_id       = module.vpc.public_subnets[0]
   security_groups = [module.nextcloud-ng.this_security_group_id]
-  
+
   # Package setting
   user_data_base64 = data.template_cloudinit_config.config.rendered
   tags = {
