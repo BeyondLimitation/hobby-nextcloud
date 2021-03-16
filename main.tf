@@ -80,7 +80,7 @@ resource "aws_iam_policy" "nextcloud-policy" {
 }
 
 resource "aws_iam_role" "nextcloud-role" {
-  name               = "Nextcloud_InstanceRole"
+  name               = "NextCloud_InstanceRole"
   assume_role_policy = file("./assumerolepolicy.json")
 }
 
