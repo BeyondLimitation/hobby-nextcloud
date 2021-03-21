@@ -84,9 +84,14 @@ resource "aws_iam_role" "nextcloud-role" {
   assume_role_policy = file("./assumerolepolicy.json")
 }
 
-resource "aws_iam_role_policy_attachment" "attach" {
+resource "aws_iam_role_policy_attachment" "attach-first" {
   role       = aws_iam_role.nextcloud-role.name
   policy_arn = aws_iam_policy.nextcloud-policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "attach-second" {
+  role       = aws_iam_role.nextcloud-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 #  Create EFS and EFS mount target  #
@@ -106,9 +111,6 @@ resource "aws_efs_file_system_policy" "nextcloud_policy" {
   file_system_id = aws_efs_file_system.efs4nextcloud.id
 
   policy = templatefile("./efs-policy.json.tpl", { nextcloud-role = aws_iam_role.nextcloud-role.arn, efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn })
-  depends_on = [
-    aws_iam_role.nextcloud-role
-  ]
 }
 
 # Create EC2 Instance #
@@ -157,3 +159,4 @@ resource "aws_instance" "simple1" {
     aws_efs_mount_target.mount_target,
   ]
 }
+
