@@ -139,6 +139,24 @@ resource "aws_efs_file_system_policy" "nextcloud_policy" {
   ]
 }
 
+# System Manager #
+
+resource "aws_ssm_document" "amazon-efs-utils" {
+  name          = "NextCloud-Install-EFSUtils"
+  document_type = "Package"
+
+  content = file("./document-installpkg.json")
+}
+
+resource "aws_ssm_association" "install" {
+  name = aws_ssm_document.amazon-efs-utils.name
+
+  targets {
+    key = "InstanceIds"
+    values = [aws_instance.simple1.id]
+  }
+}
+
 # Create EC2 Instance #
 # Ubuntu Bionic. Ubuntu 18.04 LTS AMI
 data "aws_ami" "ubuntu-bionic" {
