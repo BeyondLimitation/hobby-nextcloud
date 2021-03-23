@@ -19,6 +19,10 @@ module "vpc" {
   # Enable DNS hostname and DNS resolution. These are required for EFS mount.
   enable_dns_hostnames = true
   enable_dns_support   = true
+
+  tags = {
+    IacTool = "Terraform"
+  }
 }
 
 # Create Security Group#
@@ -55,6 +59,10 @@ module "nextcloud-ng" {
       cidr_blocks = module.vpc.private_subnets_cidr_blocks[0]
     }
   ]
+
+  tags = {
+    IacTool = "Terraform"
+  }
 }
 
 # Create IAM Role, Policy #
@@ -82,6 +90,10 @@ resource "aws_iam_policy" "nextcloud-policy" {
 resource "aws_iam_role" "nextcloud-role" {
   name               = "NextCloud_InstanceRole"
   assume_role_policy = file("./assumerolepolicy.json")
+
+  tags = {
+    IaCTool = "Terraform"
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "attach-first" {
@@ -94,11 +106,22 @@ resource "aws_iam_role_policy_attachment" "attach-second" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# This resource will be used for EC2 Instance.
+resource "aws_iam_instance_profile" "nextcloud-instance-profile" {
+  name = "NextCloud-Profile"
+  role = aws_iam_role.nextcloud-role.name
+}
+
+
 #  Create EFS and EFS mount target  #
 
 resource "aws_efs_file_system" "efs4nextcloud" {
   creation_token = "efs4nextcloud"
   encrypted      = true
+
+  tags = {
+    Name = "efs4nextcloud"
+  }
 }
 
 resource "aws_efs_mount_target" "mount_target" {
@@ -111,6 +134,9 @@ resource "aws_efs_file_system_policy" "nextcloud_policy" {
   file_system_id = aws_efs_file_system.efs4nextcloud.id
 
   policy = templatefile("./efs-policy.json.tpl", { nextcloud-role = aws_iam_role.nextcloud-role.arn, efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn })
+  depends_on = [
+    aws_iam_role.nextcloud-role
+  ]
 }
 
 # Create EC2 Instance #
@@ -148,15 +174,17 @@ resource "aws_instance" "simple1" {
 
   subnet_id       = module.vpc.public_subnets[0]
   security_groups = [module.nextcloud-ng.this_security_group_id]
+  # Instance Profile. EC2에 역할 부여.
+  iam_instance_profile = aws_iam_instance_profile.nextcloud-instance-profile.name
 
   # Package setting
   user_data_base64 = data.template_cloudinit_config.config.rendered
   tags = {
-    Name = "시험용."
+    Name    = "시험용."
+    IaCTool = "Terraform"
   }
   # Wait Until EFS Mount target is ready
   depends_on = [
     aws_efs_mount_target.mount_target,
   ]
 }
-
