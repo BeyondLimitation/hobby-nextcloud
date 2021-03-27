@@ -3,12 +3,12 @@ provider "aws" {
 }
 
 # Create VPC #
-
+# Create VPC, 2 public and 2 private subnets.
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "2.75.0"
 
-  # Note! Internet Gateway automatically created with name of VPC. Then it will be attached to this VPC.
+  # Note! Internet Gateway automatically created with same name of the VPC. Then it will be attached to this VPC.
   name = "nextcloud-terraform"
 
   azs             = ["ap-northeast-2a", "ap-northeast-2b"]
@@ -20,13 +20,13 @@ module "vpc" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
+  # Tag. Terraform made this resource.
   tags = {
     IacTool = "Terraform"
   }
 }
 
 # Create Security Group#
-
 # Security group module 
 module "nextcloud-ng" {
   source  = "terraform-aws-modules/security-group/aws"
@@ -66,7 +66,6 @@ module "nextcloud-ng" {
 }
 
 # Create IAM Role, Policy #
-
 # IAM Role. Only a specific EC2 Instance will assume this.
 data "aws_iam_policy_document" "EFS-AllowAll" {
   statement {
@@ -114,7 +113,7 @@ resource "aws_iam_instance_profile" "nextcloud-instance-profile" {
 
 
 #  Create EFS and EFS mount target  #
-
+# Create EFS
 resource "aws_efs_file_system" "efs4nextcloud" {
   creation_token = "efs4nextcloud"
   encrypted      = true
@@ -124,12 +123,14 @@ resource "aws_efs_file_system" "efs4nextcloud" {
   }
 }
 
+# Mount target in Private Subnet.
 resource "aws_efs_mount_target" "mount_target" {
   file_system_id  = aws_efs_file_system.efs4nextcloud.id
   subnet_id       = module.vpc.private_subnets[0]
   security_groups = [module.nextcloud-ng.this_security_group_id]
 }
 
+# EFS File System Policy. Allow EC2 instance to mount file system only if it has'NextCloud_InstanceRole' Role.
 resource "aws_efs_file_system_policy" "nextcloud_policy" {
   file_system_id = aws_efs_file_system.efs4nextcloud.id
 
@@ -140,7 +141,7 @@ resource "aws_efs_file_system_policy" "nextcloud_policy" {
 }
 
 # System Manager #
-
+# Write System Manager Document
 resource "aws_ssm_document" "amazon-efs-utils" {
   name          = "NextCloud-Install-EFSUtils"
   document_type = "Package"
@@ -148,6 +149,7 @@ resource "aws_ssm_document" "amazon-efs-utils" {
   content = file("./document-installpkg.json")
 }
 
+# Run the document.
 resource "aws_ssm_association" "install" {
   name = aws_ssm_document.amazon-efs-utils.name
 
@@ -175,7 +177,7 @@ data "aws_ami" "ubuntu-bionic" {
   owners = ["099720109477"]
 }
 
-# Cloud-init user_data
+# Cloud-init user_data. Create folder for EFS mount point.
 data "template_cloudinit_config" "config" {
   base64_encode = true
 
@@ -195,14 +197,16 @@ resource "aws_instance" "simple1" {
   # Instance Profile. EC2에 역할 부여.
   iam_instance_profile = aws_iam_instance_profile.nextcloud-instance-profile.name
 
-  # Package setting
+  # Create Directory. EFS 마운트에 쓸 디랙토리가 생성됨.
   user_data_base64 = data.template_cloudinit_config.config.rendered
-  tags = {
-    Name    = "시험용."
-    IaCTool = "Terraform"
-  }
+
   # Wait Until EFS Mount target is ready
   depends_on = [
     aws_efs_mount_target.mount_target,
   ]
+
+  tags = {
+    Name    = "시험용."
+    IaCTool = "Terraform"
+  }
 }
