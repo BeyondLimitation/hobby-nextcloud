@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "2.2",
+  "description": "aws:runShellScript",
+  "parameters": {
+  },
+  "mainSteps": [
+    {
+      "action": "aws:runShellScript",
+      "name": "runShellScript",
+      "inputs": {
+        "timeoutSeconds": "60",
+        "runCommand": [
+"retryCnt=15; waitTime=30; while true; do sudo mount -t efs -o iam,tls ${efs_fs_id}:/ /mnt/efs/${efs_fs_id} && sudo echo -e \"\\n${efs_fs_id}:/ /mnt/efs/${efs_fs_id} efs _netdev,noresvport,tls,iam 0 0\" >> /etc/fstab  ; if [ $? = 0 ] || [ $retryCnt -lt 1 ]; then echo File system mounted!!; break; fi; echo File system not available, retrying...; ((retryCnt--)); sleep $waitTime; done;"
+        ]
+      }
+    }
+  ]
+}

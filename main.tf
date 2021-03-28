@@ -144,19 +144,39 @@ resource "aws_efs_file_system_policy" "nextcloud_policy" {
 # Write System Manager Document
 resource "aws_ssm_document" "amazon-efs-utils" {
   name          = "NextCloud-Install-EFSUtils"
-  document_type = "Package"
+  document_type = "Command"
 
   content = file("./document-installpkg.json")
 }
 
-# Run the document.
+# Run the document. Install 'amazon-efs-utils' package on ubuntu 18.04 LTS.
 resource "aws_ssm_association" "install" {
   name = aws_ssm_document.amazon-efs-utils.name
 
   targets {
-    key = "InstanceIds"
+    key    = "InstanceIds"
     values = [aws_instance.simple1.id]
   }
+}
+
+# Try Mount efs file system '${efs_fs_id}'. Mount Point: /mnt/efs/'${efs_fs_id}'
+resource "aws_ssm_document" "try-mount" {
+  name          = "Try-Mount"
+  document_type = "Command"
+
+  content = templatefile("./document-mount-efs.json", { efs_fs_id = aws_efs_file_system.efs4nextcloud.id })
+}
+
+# Run document. Mount EFS
+resource "aws_ssm_association" "mount-efs" {
+  name = aws_ssm_document.try-mount.name
+
+  targets {
+    key    = "InstanceIds"
+    values = [aws_instance.simple1.id]
+  }
+
+  depends_on = [aws_ssm_association.install, aws_instance.simple1]
 }
 
 # Create EC2 Instance #
@@ -183,10 +203,11 @@ data "template_cloudinit_config" "config" {
 
   part {
     content_type = "text/cloud-config"
-    content      = templatefile("./setting.tpl", { efs_mt_fqdn = aws_efs_mount_target.mount_target.dns_name })
+    content      = templatefile("./setting.tpl", { efs_fs_id = aws_efs_file_system.efs4nextcloud.id })
   }
 }
 
+# Create Instance
 resource "aws_instance" "simple1" {
   ami           = data.aws_ami.ubuntu-bionic.id
   instance_type = "t3.micro"

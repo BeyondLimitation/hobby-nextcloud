@@ -1,5 +1,3 @@
 #cloud-config
-packages:
-  - [nfs-common]
 runcmd:
-  - mkdir /mnt/efs/${efs_mt_fqdn}
+  - sudo mkdir -p /mnt/efs/${efs_fs_id}
