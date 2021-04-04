@@ -155,7 +155,7 @@ resource "aws_ssm_association" "install" {
 
   targets {
     key    = "InstanceIds"
-    values = [aws_instance.simple1.id]
+    values = [aws_instance.nextcloud-instance.id]
   }
 }
 
@@ -173,30 +173,13 @@ resource "aws_ssm_association" "mount-efs" {
 
   targets {
     key    = "InstanceIds"
-    values = [aws_instance.simple1.id]
+    values = [aws_instance.nextcloud-instance.id]
   }
 
-  depends_on = [aws_ssm_association.install, aws_instance.simple1]
+  depends_on = [aws_ssm_association.install, aws_instance.nextcloud-instance]
 }
 
 # Create EC2 Instance #
-# Ubuntu Bionic. Ubuntu 18.04 LTS AMI
-data "aws_ami" "ubuntu-bionic" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["099720109477"]
-}
-
 # Cloud-init user_data. Create folder for EFS mount point.
 data "template_cloudinit_config" "config" {
   base64_encode = true
@@ -208,8 +191,8 @@ data "template_cloudinit_config" "config" {
 }
 
 # Create Instance
-resource "aws_instance" "simple1" {
-  ami           = data.aws_ami.ubuntu-bionic.id
+resource "aws_instance" "nextcloud-instance" {
+  ami           = "ami-0ef311128c526b3e1"
   instance_type = "t3.micro"
   key_name      = "key4test"
 
