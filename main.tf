@@ -219,7 +219,7 @@ resource "aws_instance" "nextcloud-instance" {
   ]
 
   tags = {
-    Name    = "시험용."
+    Name    = "My NextCloud"
     IaCTool = "Terraform"
   }
 }
