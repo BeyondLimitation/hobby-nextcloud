@@ -209,6 +209,8 @@ resource "aws_instance" "nextcloud-instance" {
   security_groups = [module.nextcloud-ng.this_security_group_id]
   # Instance Profile. EC2에 역할 부여.
   iam_instance_profile = aws_iam_instance_profile.nextcloud-instance-profile.name
+  # Enable EC2 Termination Protection
+  disable_api_termination = true
 
   # Create Directory. EFS 마운트에 쓸 디랙토리가 생성됨.
   user_data_base64 = data.template_cloudinit_config.config.rendered
