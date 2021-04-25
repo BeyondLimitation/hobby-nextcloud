@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-northeast-2"
+  region = var.region
 }
 
 # Create VPC #
@@ -20,10 +20,10 @@ module "vpc" {
   # Note! Internet Gateway automatically created with same name of the VPC. Then it will be attached to this VPC.
   name = "nextcloud-terraform"
 
-  azs             = ["ap-northeast-2a", "ap-northeast-2b"]
-  cidr            = "10.10.0.0/16"
-  public_subnets  = ["10.10.0.0/18", "10.10.64.0/18"]
-  private_subnets = ["10.10.128.0/18", "10.10.192.0/18"]
+  azs             = var.azs
+  cidr            = var.vpc_cidr
+  public_subnets  = var.public_subnets
+  private_subnets = var.private_subnets
 
   # Enable DNS hostname and DNS resolution. These are required for EFS mount.
   enable_dns_hostnames = true
@@ -199,6 +199,14 @@ data "template_cloudinit_config" "config" {
   }
 }
 
+#Instance Network Setting. Associate AWS Elastic IP to instance.
+resource "aws_eip" "eip" {
+  vpc = true
+
+  instance   = aws_instance.nextcloud-instance.id
+  depends_on = [module.vpc]
+}
+
 # Create Instance
 resource "aws_instance" "nextcloud-instance" {
   ami           = "ami-0ef311128c526b3e1"
@@ -219,6 +227,11 @@ resource "aws_instance" "nextcloud-instance" {
   depends_on = [
     aws_efs_mount_target.mount_target,
   ]
+
+  # Terraform Lifecycle
+  lifecycle {
+    ignore_changes = [ tags, security_groups ]
+  }
 
   tags = {
     Name    = "My NextCloud"
