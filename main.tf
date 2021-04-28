@@ -189,6 +189,31 @@ resource "aws_ssm_association" "mount-efs" {
 }
 
 # Create EC2 Instance #
+# Instance Network Setting. Associate AWS Elastic IP to instance.
+resource "aws_eip" "eip" {
+  vpc = true
+
+  instance   = aws_instance.nextcloud-instance.id
+  depends_on = [module.vpc]
+}
+
+# Get AMI.
+data "aws_ami" "nextcloud_ami" {
+  most_recent = true
+
+  owners = ["679593333241"] # IVCISA
+
+  filter {
+    name   = "name"
+    values = ["ivcisa-nextcloud-20.0.0-linux-ubuntu*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
 # Cloud-init user_data. Create folder for EFS mount point.
 data "template_cloudinit_config" "config" {
   base64_encode = true
@@ -199,24 +224,18 @@ data "template_cloudinit_config" "config" {
   }
 }
 
-#Instance Network Setting. Associate AWS Elastic IP to instance.
-resource "aws_eip" "eip" {
-  vpc = true
-
-  instance   = aws_instance.nextcloud-instance.id
-  depends_on = [module.vpc]
-}
-
 # Create Instance
 resource "aws_instance" "nextcloud-instance" {
-  ami           = "ami-0ef311128c526b3e1"
+  ami           = data.aws_ami.nextcloud_ami.id
   instance_type = "t3.micro"
   key_name      = "key4test"
 
   subnet_id       = module.vpc.public_subnets[0]
   security_groups = [module.nextcloud-ng.this_security_group_id]
+
   # Instance Profile. EC2에 역할 부여.
   iam_instance_profile = aws_iam_instance_profile.nextcloud-instance-profile.name
+
   # Enable EC2 Termination Protection
   disable_api_termination = true
 
@@ -230,7 +249,7 @@ resource "aws_instance" "nextcloud-instance" {
 
   # Terraform Lifecycle
   lifecycle {
-    ignore_changes = [ tags, security_groups ]
+    ignore_changes = [ tags, security_groups, ami]
   }
 
   tags = {
