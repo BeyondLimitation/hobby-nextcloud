@@ -23,3 +23,7 @@ output "EFS_MountTarget_FQDN" {
   value       = aws_efs_mount_target.mount_target.dns_name
 }
 
+output "my_ami" {
+  description = "내가 구독한 IVCISA의 Nextcloud AMI."
+  value       = data.aws_ami.nextcloud_ami.id
+}
