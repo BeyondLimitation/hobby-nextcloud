@@ -31,7 +31,7 @@ module "vpc" {
 
   # Tag. Terraform made this resource.
   tags = {
-    IacTool = "Terraform"
+    IaCTool = "Terraform"
   }
 }
 
@@ -70,7 +70,7 @@ module "nextcloud-ng" {
   ]
 
   tags = {
-    IacTool = "Terraform"
+    IaCTool = "Terraform"
   }
 }
 
