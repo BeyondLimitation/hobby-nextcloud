@@ -127,9 +127,12 @@ resource "aws_efs_file_system" "efs4nextcloud" {
   creation_token = "efs4nextcloud"
   encrypted      = true
 
+  # Add tags
   tags = {
-    Name = "efs4nextcloud"
+    Name    = "efs4nextcloud"
+    IaCTool = "Terraform"
   }
+
 }
 
 # Mount target in Private Subnet.
@@ -230,8 +233,8 @@ resource "aws_instance" "nextcloud-instance" {
   instance_type = "t3.micro"
   key_name      = "key4test"
 
-  subnet_id       = module.vpc.public_subnets[0]
-  security_groups = [module.nextcloud-ng.this_security_group_id]
+  subnet_id              = module.vpc.public_subnets[0]
+  vpc_security_group_ids = [module.nextcloud-ng.this_security_group_id]
 
   # Instance Profile. EC2에 역할 부여.
   iam_instance_profile = aws_iam_instance_profile.nextcloud-instance-profile.name
@@ -249,7 +252,7 @@ resource "aws_instance" "nextcloud-instance" {
 
   # Terraform Lifecycle
   lifecycle {
-    ignore_changes = [ tags, security_groups, ami]
+    ignore_changes = [tags, vpc_security_group_ids, ami, user_data_base64]
   }
 
   tags = {
