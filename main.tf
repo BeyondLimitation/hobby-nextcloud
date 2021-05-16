@@ -159,6 +159,10 @@ resource "aws_ssm_document" "amazon-efs-utils" {
   document_type = "Command"
 
   content = file("./document-installpkg.json")
+
+  tags = {
+    IaCTool = "Terraform"
+  }
 }
 
 # Run the document. Install 'amazon-efs-utils' package on ubuntu 18.04 LTS.
@@ -177,6 +181,10 @@ resource "aws_ssm_document" "try-mount" {
   document_type = "Command"
 
   content = templatefile("./document-mount-efs.json", { efs_fs_id = aws_efs_file_system.efs4nextcloud.id })
+
+  tags = {
+    IaCTool = "Terraform"
+  }
 }
 
 # Run document. Mount EFS
@@ -198,6 +206,10 @@ resource "aws_eip" "eip" {
 
   instance   = aws_instance.nextcloud-instance.id
   depends_on = [module.vpc]
+
+  tags = {
+    IaCTool = "Terraform"
+  }
 }
 
 # Get AMI.
