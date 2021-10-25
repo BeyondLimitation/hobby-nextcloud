@@ -97,7 +97,7 @@ resource "aws_iam_policy" "nextcloud-policy" {
 
 resource "aws_iam_role" "nextcloud-role" {
   name               = "NextCloud_InstanceRole"
-  assume_role_policy = file("./assumerolepolicy.json")
+  assume_role_policy = file("./iam/assumerolepolicy.json")
 
   tags = {
     IaCTool = "Terraform"
@@ -146,7 +146,7 @@ resource "aws_efs_mount_target" "mount_target" {
 resource "aws_efs_file_system_policy" "nextcloud_policy" {
   file_system_id = aws_efs_file_system.efs4nextcloud.id
 
-  policy = templatefile("./efs-policy.json.tpl", { nextcloud-role = aws_iam_role.nextcloud-role.arn, efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn })
+  policy = templatefile("./iam/efs-policy.json.tpl", { nextcloud-role = aws_iam_role.nextcloud-role.arn, efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn })
   depends_on = [
     aws_iam_role.nextcloud-role
   ]
@@ -158,7 +158,7 @@ resource "aws_ssm_document" "amazon-efs-utils" {
   name          = "NextCloud-Install-EFSUtils"
   document_type = "Command"
 
-  content = file("./document-installpkg.json")
+  content = file("./system-manager/document-installpkg.json")
 
   tags = {
     IaCTool = "Terraform"
@@ -180,7 +180,7 @@ resource "aws_ssm_document" "try-mount" {
   name          = "Try-Mount"
   document_type = "Command"
 
-  content = templatefile("./document-mount-efs.json", { efs_fs_id = aws_efs_file_system.efs4nextcloud.id })
+  content = templatefile("./system-manager/document-mount-efs.json", { efs_fs_id = aws_efs_file_system.efs4nextcloud.id })
 
   tags = {
     IaCTool = "Terraform"
@@ -235,7 +235,7 @@ data "template_cloudinit_config" "config" {
 
   part {
     content_type = "text/cloud-config"
-    content      = templatefile("./setting.tpl", { efs_fs_id = aws_efs_file_system.efs4nextcloud.id })
+    content      = templatefile("./cloud-init/user-data/setting.tpl", { efs_fs_id = aws_efs_file_system.efs4nextcloud.id })
   }
 }
 
@@ -272,3 +272,6 @@ resource "aws_instance" "nextcloud-instance" {
     IaCTool = "Terraform"
   }
 }
+
+# Create CloudFormation Stack #
+# Crete Stack. This is for snapshotting NextCloud EC2 Instance.
