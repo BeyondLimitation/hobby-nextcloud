@@ -1,33 +1,35 @@
 {
 	"version": "2021-10-24",
 	"Resources": {
-		"Type": "AWS::DLM::LifecyclePolicy",
-		"Properties": {
-			"Description": "Lifecycle Policy using CloudFormation. Create Backup every 15 days later. Store upto 3 snapshots.",
-			"State":"ENABLED",
-			"ExecutionRoleArn":"arn:aws:iam::345003923266:role/service-role/AWSDataLifecycleManagerDefaultRole",
-			"PolicyDetails": {
-				"ResourceTypes": [
-					"INSTANCE"
-				],
-				"TargetTags": [{
-					"Key": "Name",
-					"Value": "My NextCloud"
-				}],
-				"Schedules": [
-					{
-						"Name": "NextCloud-Snapshot-Schedule",
-						"CreateRule": {
-							"CronExpression": "cron(0 0 */15 * ? *)",
-							"RetainRule": {
-								"Count": 3
+		"NextCloud-EC2BACKUP": {
+			"Type": "AWS::DLM::LifecyclePolicy",
+			"Properties": {
+				"Description": "Lifecycle Policy using CloudFormation. Create Backup every 15 days later. Store upto 3 snapshots.",
+				"State":"ENABLED",
+				"ExecutionRoleArn":"arn:aws:iam::345003923266:role/service-role/AWSDataLifecycleManagerDefaultRole",
+				"PolicyDetails": {
+					"ResourceTypes": [
+						"INSTANCE"
+					],
+					"TargetTags": [{
+						"Key": "Name",
+						"Value": "My NextCloud"
+					}],
+					"Schedules": [
+						{
+							"Name": "NextCloud-Snapshot-Schedule",
+							"CreateRule": {
+								"CronExpression": "cron(0 0 */15 * ? *)",
+								"RetainRule": {
+									"Count": 3
+								}
 							}
 						}
-					}
-				]
-			},
-			"Tags": {
-				"Name": "NextCloud-Snapshot"
+					]
+				},
+				"Tags": {
+					"Name": "NextCloud-Snapshot"
+				}
 			}
 		}
 	}
