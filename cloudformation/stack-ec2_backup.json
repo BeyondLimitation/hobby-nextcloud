@@ -1,3 +1,27 @@
 {
-    "version": "2021-10-24"
+    "version": "2021-10-24",
+	"Resources": {
+		"Type": "AWS::DLM::LifecyclePolicy",
+		"Properties": {
+			"Description": "Lifecycle Policy using CloudFormation. Create Backup every 15 days later. Store upto 3 snapshots.",
+			"State":"ENABLED",
+			"ExecutionRoleArn":"",
+			"PolicyDetails": {
+				"Schedules": [
+					{
+					"Name": "NextCloud-Snapshot-Schedule",
+						"CreateRule": {
+						"CronExpression": "cron(0 0 */15 * ? *)",
+						"RetainRule": {
+							"Count": 3
+						}
+					}
+					}
+				]
+			},
+			"Tags": {
+				"Name": "NextCloud-Snapshot"
+			}
+		}
+	}
 }
