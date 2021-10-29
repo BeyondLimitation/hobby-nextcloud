@@ -278,4 +278,8 @@ resource "aws_instance" "nextcloud-instance" {
 resource "aws_cloudformation_stack" "Nextcloud-ServerBackup" {
   name          = "NextCloudSnapshot"
   template_body = file("./cloudformation/stack-ec2_backup.json")
+
+  tags = {
+    IaCTool = "Terraform"
+  }
 }
