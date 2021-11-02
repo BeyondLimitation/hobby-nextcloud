@@ -15,7 +15,7 @@ provider "aws" {
 # Create VPC, 2 public and 2 private subnets.
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "2.75.0"
+  version = "3.10.0"
 
   # Note! Internet Gateway automatically created with same name of the VPC. Then it will be attached to this VPC.
   name = "nextcloud-terraform"
@@ -39,7 +39,7 @@ module "vpc" {
 # Security group module 
 module "nextcloud-ng" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "3.18.0"
+  version = "4.4.0"
 
   name        = "nextcloud-ng"
   description = "Security group for nextcloud application. Allow ssh, http/https and nfs traffics inbound and outbound"
@@ -139,7 +139,7 @@ resource "aws_efs_file_system" "efs4nextcloud" {
 resource "aws_efs_mount_target" "mount_target" {
   file_system_id  = aws_efs_file_system.efs4nextcloud.id
   subnet_id       = module.vpc.private_subnets[0]
-  security_groups = [module.nextcloud-ng.this_security_group_id]
+  security_groups = [module.nextcloud-ng.security_group_id]
 }
 
 # EFS File System Policy. Allow EC2 instance to mount file system only if it has'NextCloud_InstanceRole' Role.
@@ -246,7 +246,7 @@ resource "aws_instance" "nextcloud-instance" {
   key_name      = "key4test"
 
   subnet_id              = module.vpc.public_subnets[0]
-  vpc_security_group_ids = [module.nextcloud-ng.this_security_group_id]
+  vpc_security_group_ids = [module.nextcloud-ng.security_group_id]
 
   # Instance Profile. EC2에 역할 부여.
   iam_instance_profile = aws_iam_instance_profile.nextcloud-instance-profile.name
@@ -278,6 +278,37 @@ resource "aws_instance" "nextcloud-instance" {
 resource "aws_cloudformation_stack" "Nextcloud-ServerBackup" {
   name          = "NextCloudSnapshot"
   template_body = file("./cloudformation/stack-ec2_backup.json")
+
+  tags = {
+    IaCTool = "Terraform"
+  }
+}
+
+# Create S3 Bucket#
+# Create Bucket. Saving logs.
+module "s3-log4nextcloud" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "2.10.0"
+
+  bucket = "lee-nextcloud-log"
+  acl    = "log-delivery-write"
+
+  tags = {
+    IaCTool = "Terraform"
+  }
+}
+# Create Bucket. Save nextcloud data uploaded by user and nextcloud server data.
+module "s3-nextcloud" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "2.10.0"
+
+  # Set Bucket name, 'nextcloud-data'
+  bucket = "lee-nextcloud-data"
+  # Save log to this directory of this bucket
+  logging = {
+    target_bucket = module.s3-log4nextcloud.s3_bucket_id
+    target_prefix = "log/"
+  }
 
   tags = {
     IaCTool = "Terraform"
