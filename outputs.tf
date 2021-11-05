@@ -28,6 +28,11 @@ output "my_ami" {
   value       = data.aws_ami.nextcloud_ami.id
 }
 
+output "Datasync_ami" {
+  description = "Amazon Datasync AMI"
+  value       = data.aws_ami.datasync-ami.id
+}
+
 output "nextcloud-data-bucket" {
   description = "Nextcloud의 데이터 백업용 Bucket의 ID"
   value       = module.s3-nextcloud.s3_bucket_id
