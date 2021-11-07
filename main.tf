@@ -405,13 +405,20 @@ module "endpoint-sg" {
 }
 
 #Create Endpoint
-# module "nextcloud-endpoint" {
-#   source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
-#   version = "3.11.0"
+resource "aws_vpc_endpoint" "nextcloud-backup-endpoint" {
+  vpc_id       = module.vpc.vpc_id
+  service_name = "com.amazonaws.ap-northeast-2.s3"
+  # Interface Endpoint
+  vpc_endpoint_type = "Interface"
 
-#   vpc_id  = module.vpc.vpc_id
-#   security_group_id = 
-# }
+  security_group_ids = [module.endpoint-sg.security_group_id]
+  subnet_ids         = [module.vpc.private_subnets[0], module.vpc.private_subnets[1]]
+
+  tags = {
+    Name    = "NextCloud Backup Endpoint"
+    IaCTool = "Terraform"
+  }
+}
 
 ## Create EC2 Instance. This instance is deployed for NextCloud data backup. User content(ex: .pdf, .mp3, .odt) and Nextcloud Database are the targets
 # Get Datasync AMI

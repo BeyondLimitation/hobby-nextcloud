@@ -23,6 +23,11 @@ output "EFS_MountTarget_FQDN" {
   value       = aws_efs_mount_target.mount_target.dns_name
 }
 
+output "VPC_Interface_Endpoint_ID" {
+  description = "NextCloud Backup 서버에서 사용할 VPC Interface Endpoint ID"
+  value       = aws_vpc_endpoint.nextcloud-backup-endpoint.id
+}
+
 output "my_ami" {
   description = "내가 구독한 IVCISA의 Nextcloud AMI."
   value       = data.aws_ami.nextcloud_ami.id
