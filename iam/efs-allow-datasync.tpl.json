@@ -1,0 +1,14 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowDataSyncReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "elasticfilesystem:AmazonElasticFileSystemReadOnlyAccess",
+                "elasticfilesystem:ClientMount"
+            ],
+            "Resource": "${efs-fs-arn}"
+        }
+    ]
+}
