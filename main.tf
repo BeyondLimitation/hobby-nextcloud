@@ -306,6 +306,8 @@ module "s3-nextcloud" {
 
   # Set Bucket name, 'nextcloud-data'
   bucket = "lee-nextcloud-data"
+  # Set Policy. Allow DataSync Service to read and write objects in bucket.
+
   # Save log to this directory of this bucket
   logging = {
     target_bucket = module.s3-log4nextcloud.s3_bucket_id
@@ -317,61 +319,16 @@ module "s3-nextcloud" {
   }
 }
 
+resource "aws_s3_bucket_policy" "allow-datasync" {
+  # S3 Bucket.
+  bucket = module.s3-nextcloud.s3_bucket_id
 
+  # Policy. Read './iam/s3-allow-datasybc.tpl.json' for detail.
+  policy = templatefile("./iam/s3-allow-datasync.tpl.json", { nextcloud-s3-arn = module.s3-nextcloud.s3_bucket_arn })
+}
 
 ##Create VPC Endpoint. This makes connection between Backup Server(EC2) and S3 private ##
-# Create Security Group
-module "datasync-agent-sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "4.4.0"
-
-  name        = "datasync-agent-sg"
-  description = "Security group for DataSync Agent. Allow ssh, http traffics inbound and outbound"
-  vpc_id      = module.vpc.vpc_id
-
-  # 인바운드 규칙
-  ingress_cidr_blocks = ["0.0.0.0/0"]
-  ingress_rules       = ["http-80-tcp", "ssh-tcp"]
-
-  # 아웃바운드 규칙
-  egress_cidr_blocks = ["0.0.0.0/0"]
-  egress_rules       = ["http-80-tcp", "ssh-tcp"]
-
-  tags = {
-    IaCTool = "Terraform"
-  }
-}
-
-# Create Security Group
-module "backup-sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "4.4.0"
-
-  name        = "backup-sg"
-  description = "Security group for Backup Server. Allow ssh, port 8000 tcp traffics inbound and all(-1) outbound"
-  vpc_id      = module.vpc.vpc_id
-
-  # 인바운드 규칙
-  ingress_cidr_blocks = ["0.0.0.0/0"]
-  ingress_rules       = ["ssh-tcp"]
-  ingress_with_cidr_blocks = [
-    { # Rule 1
-      from_port   = 8000
-      to_port     = 8000
-      protocol    = "tcp"
-      cidr_blocks = "0.0.0.0/0"
-    }
-  ]
-
-  # 아웃바운드 규칙
-  egress_cidr_blocks = ["0.0.0.0/0"]
-  egress_rules       = ["ssh-tcp"]
-
-  tags = {
-    IaCTool = "Terraform"
-  }
-}
-
+# Create Security Group for Endpoint
 module "endpoint-sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "4.4.0"
@@ -381,19 +338,8 @@ module "endpoint-sg" {
   vpc_id      = module.vpc.vpc_id
 
   # 인바운드 규칙
-  ingress_cidr_blocks = ["0.0.0.0/0"]
-  ingress_with_source_security_group_id = [
-    { # Rule 1
-      from_port                = 1024
-      to_port                  = 1064
-      protocol                 = "tcp"
-      source_security_group_id = module.datasync-agent-sg.security_group_id
-      }, {
-      # Rule 2
-      rule                     = "https-443-tcp"
-      source_security_group_id = module.datasync-agent-sg.security_group_id
-    }
-  ]
+  ingress_cidr_blocks = [module.vpc.private_subnets_cidr_blocks[0], module.vpc.private_subnets_cidr_blocks[1]]
+  ingress_rules       = ["nfs-tcp"]
 
   # 아웃바운드 규칙
   egress_cidr_blocks = ["0.0.0.0/0"]
@@ -419,33 +365,3 @@ resource "aws_vpc_endpoint" "nextcloud-backup-endpoint" {
     IaCTool = "Terraform"
   }
 }
-
-## Create EC2 Instance. This instance is deployed for NextCloud data backup. User content(ex: .pdf, .mp3, .odt) and Nextcloud Database are the targets
-# Get Datasync AMI
-data "aws_ami" "datasync-ami" {
-  most_recent = true
-
-  owners = ["956528963208"]
-
-  filter {
-    name   = "name"
-    values = ["aws-datasync*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}
-
-# resource "aws_instance" "nextcloud-backup" {
-#   ami           = data.aws_ami.datasync-ami.id
-#   instance_type = "t3.small"
-#   key_name      = "key4test"
-#   subnet_id     = module.vpc.public_subnets[0]
-
-#   tags = {
-#     IaCTool = "Terraform"
-#     Name    = "Nextcloud-Backup"
-#   }
-# }
