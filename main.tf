@@ -319,6 +319,7 @@ module "s3-nextcloud" {
   }
 }
 
+# Set S3 Bucket Policy.
 resource "aws_s3_bucket_policy" "allow-datasync" {
   # S3 Bucket.
   bucket = module.s3-nextcloud.s3_bucket_id
