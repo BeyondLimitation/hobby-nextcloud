@@ -146,9 +146,10 @@ resource "aws_efs_mount_target" "mount_target" {
 resource "aws_efs_file_system_policy" "nextcloud_policy" {
   file_system_id = aws_efs_file_system.efs4nextcloud.id
 
-  policy = templatefile("./iam/efs-policy.json.tpl", { nextcloud-role = aws_iam_role.nextcloud-role.arn, efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn })
+  policy = templatefile("./iam/efs-policy.tpl.json", { nextcloud-role = aws_iam_role.nextcloud-role.arn, efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn, datasync-role = aws_iam_role.datasync-role.arn })
+
   depends_on = [
-    aws_iam_role.nextcloud-role
+    aws_iam_role.nextcloud-role, aws_iam_role.datasync-role
   ]
 }
 
@@ -365,4 +366,31 @@ resource "aws_vpc_endpoint" "nextcloud-backup-endpoint" {
     Name    = "NextCloud Backup Endpoint"
     IaCTool = "Terraform"
   }
+}
+
+## Create Service Role ##
+
+# Create IAM Role for Datasync. This is assumed by DataSync Service.
+resource "aws_iam_role" "datasync-role" {
+  name               = "DataSyncRole"
+  assume_role_policy = file("./iam/assumerole-datasync.json")
+
+  tags = {
+    IaCTool = "Terraform"
+  }
+}
+
+resource "aws_iam_policy" "datasync-policy" {
+  name        = "EFS-AllowDataSync"
+  description = "This allow DataSync Service to read-only access to specific file system only"
+
+  policy = templatefile("./iam/efs-allow-datasync.tpl.json", { efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn, datasync-role = aws_iam_role.datasync-role.arn })
+  tags = {
+    IaCTool = "Terraform"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "attach-datasync" {
+  role       = aws_iam_role.datasync-role.name
+  policy_arn = aws_iam_policy.datasync-policy.arn
 }
