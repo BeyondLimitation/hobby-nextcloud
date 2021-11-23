@@ -384,7 +384,7 @@ resource "aws_iam_policy" "datasync-policy" {
   name        = "EFS-AllowDataSync"
   description = "This allow DataSync Service to read-only access to specific file system only"
 
-  policy = templatefile("./iam/efs-allow-datasync.tpl.json", { efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn, datasync-role = aws_iam_role.datasync-role.arn })
+  policy = templatefile("./iam/efs-allow-datasync.tpl.json", { efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn, nextcloud-data = module.s3-nextcloud.s3_bucket_arn, datasync-role = aws_iam_role.datasync-role.arn })
   tags = {
     IaCTool = "Terraform"
   }
