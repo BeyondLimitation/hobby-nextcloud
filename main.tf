@@ -380,6 +380,7 @@ resource "aws_iam_role" "datasync-role" {
   }
 }
 
+# Create Policy for the role, 'DataSyncRole'.
 resource "aws_iam_policy" "datasync-policy" {
   name        = "EFS-AllowDataSync"
   description = "This allow DataSync Service to read-only access to specific file system only"
@@ -390,7 +391,40 @@ resource "aws_iam_policy" "datasync-policy" {
   }
 }
 
+# Attach policy docs to the role.
 resource "aws_iam_role_policy_attachment" "attach-datasync" {
   role       = aws_iam_role.datasync-role.name
   policy_arn = aws_iam_policy.datasync-policy.arn
+}
+
+## DataSync ##
+# This returns the ARN.
+data "aws_security_group" "nextcloudsg-arn" {
+  id = module.nextcloud-ng.security_group_id
+}
+# Create DataSync location. source.
+resource "aws_datasync_location_efs" "efs4nextcloud_loc" {
+  efs_file_system_arn = aws_efs_file_system.efs4nextcloud.arn
+  ec2_config {
+    security_group_arns = [data.aws_security_group.nextcloudsg-arn.arn]
+    subnet_arn          = module.vpc.private_subnet_arns[0]
+  }
+
+  tags = {
+    IaCTool = "Terraform"
+  }
+}
+
+# Create DataSync location. destination
+resource "aws_datasync_location_s3" "s3-nextcloud" {
+  s3_bucket_arn = module.s3-nextcloud.s3_bucket_arn
+  subdirectory  = "/mirror"
+
+  s3_config {
+    bucket_access_role_arn = aws_iam_role.datasync-role.arn
+  }
+
+  tags = {
+    IaCTool = "Terraform"
+  }
 }
