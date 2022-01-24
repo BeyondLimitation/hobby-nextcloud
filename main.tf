@@ -315,6 +315,15 @@ module "s3-nextcloud" {
     target_prefix = "log/"
   }
 
+  # Enable S3 Server Side Encryption(SSE-S3)
+  server_side_encryption_configuration = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
+
   tags = {
     IaCTool = "Terraform"
   }
