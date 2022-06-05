@@ -23,3 +23,13 @@ variable "private_subnets" {
   description = "VPC의 Private Subnet들."
 }
 
+variable "mon_vpc_cidr" {
+  type        = string
+  description = "VPC 'moniter-terraform'의 CIDR"
+}
+
+variable "mon_private_subnets" {
+  type        = list(string)
+  description = "VPC 'monitering-terraform'를 위한 Private Subnet"
+}
+

@@ -12,6 +12,44 @@ provider "aws" {
 }
 
 # Create VPC #
+# Create VPC, 2 private subnets.
+module "moniter-vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "3.11.0"
+
+  name = "monitering-terraform"
+
+  azs             = var.azs
+  cidr            = var.mon_vpc_cidr
+  private_subnets = var.mon_private_subnets
+
+  # Enable Flow Log and save log files in S3 bucket
+  enable_flow_log           = true
+  flow_log_destination_type = "s3"
+  flow_log_destination_arn  = module.vpc-flowlog-moniter.s3_bucket_arn
+
+  # Tag. Terraform made this resource.
+  tags = {
+    IaCTool = "Terraform"
+  }
+
+  depends_on = [
+    module.vpc-flowlog-moniter
+  ]
+}
+
+# Create S3 Bucket for VPC Flow Log
+module "vpc-flowlog-moniter" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "2.10.0"
+
+  bucket = "lee-monitering"
+
+  tags = {
+    IaCTool = "Terraform"
+  }
+}
+
 # Create VPC, 2 public and 2 private subnets.
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
