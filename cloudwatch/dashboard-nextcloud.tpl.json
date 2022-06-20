@@ -1,0 +1,29 @@
+{
+    "widgets":[
+        {
+            "type":"metric",
+            "x":0,"y":0,
+            "width":12,"height":6,
+            "properties":{
+                "metrics": [
+                    [ { "expression": "METRICS()/1073741824", "label": "GiB", "id": "e1", "region": "${aws-region}" } ],
+                    [ "AWS/EFS", "StorageBytes", "StorageClass", "Total", "FileSystemId", "${fs-id}", { "id": "m1", "visible": false } ]
+                ],
+                "sparkline": true,
+                "view": "singleValue",
+                "period": 300,
+                "stat": "Average",
+                "title": "현재 사용량(평균)",
+                "singleValueFullPrecision": true,
+                "stacked": true,
+                "setPeriodToTimeRange": true,
+                "width": 1630,
+                "height": 200,
+                "start": "-PT3H",
+                "end": "P0D",
+                "timezone": "+0900",
+                "region": "${aws-region}"
+            }
+        }
+    ]
+}
