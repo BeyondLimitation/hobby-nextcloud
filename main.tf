@@ -114,6 +114,12 @@ resource "aws_iam_role_policy_attachment" "attach-second" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# For CloudWatch Agent. Allows to send data to CloudWatch Service
+resource "aws_iam_role_policy_attachment" "attach-third" {
+  role       = aws_iam_role.nextcloud-role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy"
+}
+
 # This resource will be used for EC2 Instance.
 resource "aws_iam_instance_profile" "nextcloud-instance-profile" {
   name = "NextCloud-Profile"
@@ -198,6 +204,28 @@ resource "aws_ssm_association" "mount-efs" {
   }
 
   depends_on = [aws_ssm_association.install, aws_instance.nextcloud-instance]
+}
+
+
+resource "aws_ssm_document" "run-install-agent" {
+  name          = "NextCloud-Install-CloudWatchAgent"
+  document_type = "Command"
+
+  content = file("./system-manager/document-installagent.json")
+
+  tags = {
+    IaCTool = "Terraform"
+  }
+}
+
+# Run the document. Install CloudWatch Agent software on NextCloud.
+resource "aws_ssm_association" "install-agent" {
+  name = aws_ssm_document.run-install-agent.name
+
+  targets {
+    key    = "InstanceIds"
+    values = [aws_instance.nextcloud-instance.id]
+  }
 }
 
 # Create EC2 Instance #
@@ -469,4 +497,14 @@ resource "aws_route53_record" "nextcloud" {
   type    = "A"
   ttl     = "300"
   records = ["3.35.95.62"]
+}
+
+
+# 2022-06-20 #
+## CloudWatch##
+
+# Add a "NextCloud" Dashboard
+resource "aws_cloudwatch_dashboard" "nextcloud-board" {
+  dashboard_name = "NextCloud"
+  dashboard_body = templatefile("cloudwatch/dashboard-nextcloud.tpl.json", { aws-region = var.region, fs-id = aws_efs_file_system.efs4nextcloud.id })
 }
