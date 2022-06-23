@@ -501,7 +501,7 @@ resource "aws_route53_record" "nextcloud" {
 
 
 # 2022-06-20 #
-## CloudWatch##
+## CloudWatch ##
 
 # Add a "NextCloud" Dashboard
 resource "aws_cloudwatch_dashboard" "nextcloud-board" {
