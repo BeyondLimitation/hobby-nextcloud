@@ -508,3 +508,18 @@ resource "aws_cloudwatch_dashboard" "nextcloud-board" {
   dashboard_name = "NextCloud"
   dashboard_body = templatefile("./cloudwatch/dashboard-nextcloud.tpl.json", { aws-region = var.region, fs-id = aws_efs_file_system.efs4nextcloud.id })
 }
+
+# Add CloudWatch Log Group, "NextCloud-Log"
+resource "aws_cloudwatch_log_group" "nextcloud-log-group" {
+  name = "NextCloud_Infra"
+
+  tags = {
+    "IaCTool" = "Terraform"
+  }
+}
+
+# Add Log Stream, "EC2"
+resource "aws_cloudwatch_log_stream" "ec2" {
+  name           = "nextcloud_ec2"
+  log_group_name = aws_cloudwatch_log_group.nextcloud-log-group.name
+}
