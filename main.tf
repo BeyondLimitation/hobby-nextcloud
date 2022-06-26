@@ -509,17 +509,15 @@ resource "aws_cloudwatch_dashboard" "nextcloud-board" {
   dashboard_body = templatefile("./cloudwatch/dashboard-nextcloud.tpl.json", { aws-region = var.region, fs-id = aws_efs_file_system.efs4nextcloud.id })
 }
 
-# Add CloudWatch Log Group, "NextCloud-Log"
-resource "aws_cloudwatch_log_group" "nextcloud-log-group" {
-  name = "NextCloud_Infra"
+# System Manager#
+# Upload 'config.json' file to Parameter Store
+
+resource "aws_ssm_parameter" "agent-config" {
+  name  = "/nextcloud/config.json"
+  type  = "String"
+  value = file("./system-manager/parameter-store/config.json")
 
   tags = {
     "IaCTool" = "Terraform"
   }
-}
-
-# Add Log Stream, "EC2"
-resource "aws_cloudwatch_log_stream" "ec2" {
-  name           = "nextcloud_ec2"
-  log_group_name = aws_cloudwatch_log_group.nextcloud-log-group.name
 }
