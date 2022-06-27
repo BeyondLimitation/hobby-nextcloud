@@ -117,7 +117,7 @@ resource "aws_iam_role_policy_attachment" "attach-second" {
 # For CloudWatch Agent. Allows to send data to CloudWatch Service
 resource "aws_iam_role_policy_attachment" "attach-third" {
   role       = aws_iam_role.nextcloud-role.name
-  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy"
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
 # This resource will be used for EC2 Instance.
@@ -513,11 +513,33 @@ resource "aws_cloudwatch_dashboard" "nextcloud-board" {
 # Upload 'config.json' file to Parameter Store
 
 resource "aws_ssm_parameter" "agent-config" {
-  name  = "/nextcloud/config.json"
+  # name must starts with "AmazonCloudWatch-"
+  name  = "AmazonCloudWatch-NextCloud"
   type  = "String"
-  value = file("./system-manager/parameter-store/config.json")
+  value = file("./system-manager/parameter-store/AmazonCloudWatch-NextCloud.json")
 
   tags = {
     "IaCTool" = "Terraform"
+  }
+}
+
+# Run Command
+resource "aws_ssm_document" "run-agent" {
+  name          = "NextCloud-Run-CloudWatchAgent"
+  document_type = "Command"
+
+  content = templatefile("./system-manager/document-manageagent.tpl.json", { action = "fetch-config", mode = "ec2", cwaconfig = aws_ssm_parameter.agent-config.name })
+
+  tags = {
+    IaCTool = "Terraform"
+  }
+}
+
+resource "aws_ssm_association" "run-agent" {
+  name = aws_ssm_document.run-agent.name
+
+  targets {
+    key    = "InstanceIds"
+    values = [aws_instance.nextcloud-instance.id]
   }
 }
