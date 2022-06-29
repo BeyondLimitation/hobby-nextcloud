@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2.2",
+  "description": "For Terraform. Run CloudWatch Agent with 'config.json' stored in SSM Parameter Store",
+  "mainSteps": [
+    {
+      "action": "aws:runShellScript",
+      "name": "TerraformRunCloudWatchAgent",
+      "inputs": {
+        "runCommand": [
+          " if [[ ! -f /opt/aws/amazon-cloudwatch-agent/etc/common-config.toml ]]; then touch /opt/aws/amazon-cloudwatch-agent/etc/common-config.toml; fi",
+          "/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a ${action} -m ${mode} -c ssm:${cwaconfig} -s"
+        ]
+      }
+    }
+  ]
+}
