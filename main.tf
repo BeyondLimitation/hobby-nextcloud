@@ -152,10 +152,10 @@ resource "aws_efs_mount_target" "mount_target" {
 resource "aws_efs_file_system_policy" "nextcloud_policy" {
   file_system_id = aws_efs_file_system.efs4nextcloud.id
 
-  policy = templatefile("./iam/efs-policy.tpl.json", { nextcloud-role = aws_iam_role.nextcloud-role.arn, efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn, datasync-role = aws_iam_role.datasync-role.arn })
+  policy = templatefile("./iam/efs-policy.tpl.json", { nextcloud-role = aws_iam_role.nextcloud-role.arn, efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn })
 
   depends_on = [
-    aws_iam_role.nextcloud-role, aws_iam_role.datasync-role
+    aws_iam_role.nextcloud-role
   ]
 }
 
@@ -313,144 +313,6 @@ resource "aws_cloudformation_stack" "Nextcloud-ServerBackup" {
   }
 }
 
-
-### NextCloud Data Backup ###
-# Create S3 Bucket#
-# Create Bucket. Saving logs.
-module "s3-log4nextcloud" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "2.10.0"
-
-  bucket = "lee-nextcloud-log"
-  acl    = "log-delivery-write"
-
-  tags = {
-    IaCTool = "Terraform"
-  }
-}
-# Create Bucket. Save nextcloud data uploaded by user and nextcloud server data.
-module "s3-nextcloud" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "2.10.0"
-
-  # Set Bucket name, 'nextcloud-data'
-  bucket = "lee-nextcloud-data"
-  # Set Policy. Allow DataSync Service to read and write objects in bucket.
-
-  # Save log to this directory of this bucket
-  logging = {
-    target_bucket = module.s3-log4nextcloud.s3_bucket_id
-    target_prefix = "log/"
-  }
-
-  # Enable S3 Server Side Encryption(SSE-S3)
-  server_side_encryption_configuration = {
-    rule = {
-      apply_server_side_encryption_by_default = {
-        sse_algorithm = "AES256"
-      }
-    }
-  }
-
-  tags = {
-    IaCTool = "Terraform"
-  }
-}
-
-# Set S3 Bucket Policy.
-resource "aws_s3_bucket_policy" "allow-datasync" {
-  # S3 Bucket.
-  bucket = module.s3-nextcloud.s3_bucket_id
-
-  # Policy. Read './iam/s3-allow-datasybc.tpl.json' for detail.
-  policy = templatefile("./iam/s3-allow-datasync.tpl.json", { nextcloud-s3-arn = module.s3-nextcloud.s3_bucket_arn })
-}
-
-##Create VPC Endpoint. This makes connection between Backup Server(EC2) and S3 private ##
-# Create Security Group for Endpoint
-module "endpoint-sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "4.4.0"
-
-  name        = "backup-sg"
-  description = "Security group for DataSync Agent. Allow ssh, http traffics inbound and outbound"
-  vpc_id      = module.vpc.vpc_id
-
-  # 인바운드 규칙
-  ingress_cidr_blocks = [module.vpc.private_subnets_cidr_blocks[0], module.vpc.private_subnets_cidr_blocks[1]]
-  ingress_rules       = ["nfs-tcp"]
-
-  # 아웃바운드 규칙
-  egress_cidr_blocks = ["0.0.0.0/0"]
-  egress_rules       = ["all-all"]
-
-  tags = {
-    IaCTool = "Terraform"
-  }
-}
-
-#Create Endpoint
-resource "aws_vpc_endpoint" "nextcloud-backup-endpoint" {
-  vpc_id       = module.vpc.vpc_id
-  service_name = "com.amazonaws.ap-northeast-2.s3"
-  # Interface Endpoint
-  vpc_endpoint_type = "Interface"
-
-  security_group_ids = [module.endpoint-sg.security_group_id]
-  subnet_ids         = [module.vpc.private_subnets[0], module.vpc.private_subnets[1]]
-
-  tags = {
-    Name    = "NextCloud Backup Endpoint"
-    IaCTool = "Terraform"
-  }
-}
-
-## Create Service Role ##
-
-# Create IAM Role for Datasync. This is assumed by DataSync Service.
-resource "aws_iam_role" "datasync-role" {
-  name               = "DataSyncRole"
-  assume_role_policy = file("./iam/assumerole-datasync.json")
-
-  tags = {
-    IaCTool = "Terraform"
-  }
-}
-
-# Create Policy for the role, 'DataSyncRole'.
-resource "aws_iam_policy" "datasync-policy" {
-  name        = "EFS-AllowDataSync"
-  description = "This allow DataSync Service to read-only access to specific file system only"
-
-  policy = templatefile("./iam/efs-allow-datasync.tpl.json", { efs-fs-arn = aws_efs_mount_target.mount_target.file_system_arn, nextcloud-data = module.s3-nextcloud.s3_bucket_arn, datasync-role = aws_iam_role.datasync-role.arn })
-  tags = {
-    IaCTool = "Terraform"
-  }
-}
-
-# Attach policy docs to the role.
-resource "aws_iam_role_policy_attachment" "attach-datasync" {
-  role       = aws_iam_role.datasync-role.name
-  policy_arn = aws_iam_policy.datasync-policy.arn
-}
-
-## DataSync ##
-# This returns the ARN.
-data "aws_security_group" "nextcloudsg-arn" {
-  id = module.nextcloud-ng.security_group_id
-}
-# Create DataSync location. source.
-resource "aws_datasync_location_efs" "efs4nextcloud_loc" {
-  efs_file_system_arn = aws_efs_file_system.efs4nextcloud.arn
-  ec2_config {
-    security_group_arns = [data.aws_security_group.nextcloudsg-arn.arn]
-    subnet_arn          = module.vpc.private_subnet_arns[0]
-  }
-
-  tags = {
-    IaCTool = "Terraform"
-  }
-}
 
 # 2022-05-12 #
 # Route53

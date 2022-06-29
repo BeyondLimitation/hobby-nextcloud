@@ -14,16 +14,6 @@
                           "elasticfilesystem:ClientMount"
 		  ],
 		  "Resource": "${efs-fs-arn}"
-	  },{
-		  "Sid": "Allow-DataSyncReadOnly",
-		  "Effect": "Allow",
-		  "Principal": {
-			  "AWS": "${datasync-role}"
-		  },
-		  "Action": [
-			  "elasticfilesystem:ClientMount"
-		  ],
-		  "Resource": "${efs-fs-arn}"
 	  }
   ]
 }
