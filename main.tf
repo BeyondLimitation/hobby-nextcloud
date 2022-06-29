@@ -452,34 +452,6 @@ resource "aws_datasync_location_efs" "efs4nextcloud_loc" {
   }
 }
 
-# Create DataSync location. destination
-resource "aws_datasync_location_s3" "s3-nextcloud" {
-  s3_bucket_arn = module.s3-nextcloud.s3_bucket_arn
-  subdirectory  = "/mirror"
-
-  s3_config {
-    bucket_access_role_arn = aws_iam_role.datasync-role.arn
-  }
-
-  tags = {
-    IaCTool = "Terraform"
-  }
-}
-
-resource "aws_datasync_task" "migrate" {
-  source_location_arn      = aws_datasync_location_efs.efs4nextcloud_loc.arn
-  destination_location_arn = aws_datasync_location_s3.s3-nextcloud.arn
-  name                     = "Migration"
-
-  schedule {
-    schedule_expression = "cron(0 0 */15 * ? * )"
-  }
-
-  tags = {
-    IaCTool = "Terraform"
-  }
-}
-
 # 2022-05-12 #
 # Route53
 
