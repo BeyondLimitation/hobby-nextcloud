@@ -26,7 +26,7 @@
             }
         },{
             "type":"metric",
-            "x":10,"y":0,
+            "x":8,"y":0,
             "width": 6, "height":6,
             "properties": {
                 "metrics": [
@@ -48,6 +48,40 @@
                 "start": "-PT3H",
                 "end": "P0D",
                 "timezone": "+0900"
+            }
+        },{
+            "type":"metric",
+            "x":15,"y":0,
+            "width":6,"height":6,
+            "properties": {
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                    [ "CWAgent", "cpu_usage_system", "InstanceId", "${instance-id}", "ImageId", "${instance-ami}", "cpu", "cpu1", "InstanceType", "${instance-type}" ],
+                    [ "...", "cpu0", ".", "." ]
+                ],
+                "title": "System의 CPU 코어 사용률",
+                "period": 300,
+                "width": 1558,
+                "height": 200,
+                "start": "-PT3H",
+                "end": "P0D",
+                "timezone": "+0900",
+                "region":"${aws-region}"
+            }
+        },{
+            "type":"metric",
+            "x":15,"y":8,
+            "width":6,"height":6,
+            "properties":{
+                "view": "timeSeries",
+                "stacked": false,
+                "metrics": [
+                    [ "AWS/EC2", "CPUUtilization", "InstanceId", "i-0c4860932262cd6a0" ]
+                ],
+                "region": "ap-northeast-2",
+                "title": "NextCloud 인스턴스 CPU 사용량",
+                "period": 300
             }
         }
     ]
