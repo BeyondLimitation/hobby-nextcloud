@@ -3,7 +3,7 @@
         {
             "type":"metric",
             "x":0,"y":0,
-            "width":12,"height":6,
+            "width":6,"height":6,
             "properties":{
                 "metrics": [
                     [ { "expression": "METRICS()/1073741824", "label": "GiB", "id": "e1", "region": "${aws-region}" } ],
@@ -23,6 +23,31 @@
                 "end": "P0D",
                 "timezone": "+0900",
                 "region": "${aws-region}"
+            }
+        },{
+            "type":"metric",
+            "x":10,"y":0,
+            "width": 6, "height":6,
+            "properties": {
+                "metrics": [
+                    [ "CWAgent", "mem_used_percent", "InstanceId", "${instance-id}", "ImageId", "${instance-ami}", "InstanceType", "${instance-type}" ]
+                ],
+                "view": "gauge",
+                "region":"${aws-region}",
+                "yAxis": {
+                    "left": {
+                        "min": 0,
+                        "max": 100
+                    }
+                },
+                "title": "현재 메모리 사용량",
+                "period": 10,
+                "stat": "Average",
+                "width": 1558,
+                "height": 200,
+                "start": "-PT3H",
+                "end": "P0D",
+                "timezone": "+0900"
             }
         }
     ]

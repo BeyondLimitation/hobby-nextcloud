@@ -340,7 +340,7 @@ resource "aws_route53_record" "nextcloud" {
 # Add a "NextCloud" Dashboard
 resource "aws_cloudwatch_dashboard" "nextcloud-board" {
   dashboard_name = "NextCloud"
-  dashboard_body = templatefile("./cloudwatch/dashboard-nextcloud.tpl.json", { aws-region = var.region, fs-id = aws_efs_file_system.efs4nextcloud.id })
+  dashboard_body = templatefile("./cloudwatch/dashboard-nextcloud.tpl.json", { aws-region = var.region, fs-id = aws_efs_file_system.efs4nextcloud.id, instance-id=aws_instance.nextcloud-instance.id ,instance-ami=data.aws_ami.nextcloud_ami.id, instance-type=aws_instance.nextcloud-instance.instance_type })
 }
 
 # System Manager#
