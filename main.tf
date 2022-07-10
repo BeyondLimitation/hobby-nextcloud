@@ -29,6 +29,17 @@ module "vpc" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
+  # Enable VPC Flow Log and Save Flow Logs to S3.
+  enable_flow_log                      = true
+  create_flow_log_cloudwatch_log_group = true
+  create_flow_log_cloudwatch_iam_role  = true
+  flow_log_max_aggregation_interval    = 60
+
+  vpc_flow_log_tags = {
+    "IaCTool" = "Terraform",
+    "Name"    = "NextCloud-Log"
+  }
+
   # Tag. Terraform made this resource.
   tags = {
     IaCTool = "Terraform"
@@ -340,7 +351,7 @@ resource "aws_route53_record" "nextcloud" {
 # Add a "NextCloud" Dashboard
 resource "aws_cloudwatch_dashboard" "nextcloud-board" {
   dashboard_name = "NextCloud"
-  dashboard_body = templatefile("./cloudwatch/dashboard-nextcloud.tpl.json", { aws-region = var.region, fs-id = aws_efs_file_system.efs4nextcloud.id, instance-id=aws_instance.nextcloud-instance.id ,instance-ami=data.aws_ami.nextcloud_ami.id, instance-type=aws_instance.nextcloud-instance.instance_type })
+  dashboard_body = templatefile("./cloudwatch/dashboard-nextcloud.tpl.json", { aws-region = var.region, fs-id = aws_efs_file_system.efs4nextcloud.id, instance-id = aws_instance.nextcloud-instance.id, instance-ami = data.aws_ami.nextcloud_ami.id, instance-type = aws_instance.nextcloud-instance.instance_type })
 }
 
 # System Manager#
