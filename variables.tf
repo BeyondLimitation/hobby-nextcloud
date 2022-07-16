@@ -3,6 +3,11 @@ variable "region" {
   description = "Region"
 }
 
+variable "account-id" {
+  type        = string
+  description = "AWS 계정 Account ID"
+}
+
 variable "azs" {
   type        = list(string)
   description = "가용 영역의 목록"
