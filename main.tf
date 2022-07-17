@@ -133,8 +133,9 @@ data "aws_cloudwatch_log_group" "flow_log_group" {
   name = format("/aws/vpc-flow-log/%s", module.vpc.vpc_id)
 }
 
-resource "aws_iam_policy" "MetricStreams-FirehoseToS3" {
-  name   = "MetricStreams-FirehoseToS3"
+# Policy Document 
+resource "aws_iam_policy" "metricstreams-firehosetos3" {
+  name   = "NextCloud-MetricStreams-FirehoseToS3"
   policy = templatefile("./iam/metricstreams-s3.tpl.json", { region = "var.region", account-id = var.account-id, s3-bucket-arn = module.store-metric.s3_bucket_arn, log-group = data.aws_cloudwatch_log_group.flow_log_group.name })
 
   tags = {
@@ -142,6 +143,22 @@ resource "aws_iam_policy" "MetricStreams-FirehoseToS3" {
   }
 }
 
+# Allow Kinesis Service to assume role
+resource "aws_iam_role" "kinesis-role" {
+  name = "NextCloud-Kinesis-AssumeRole"
+  assume_role_policy = file("./iam/assumerole-kinesis.json")
+
+  tags = {
+    "IaCTool" = "Terraform"
+  }
+}
+# Attach Policy to Role
+resource "aws_iam_role_policy_attachment" "kinesis-attach" {
+  role       = aws_iam_role.kinesis-role.name
+  policy_arn = aws_iam_policy.metricstreams-firehosetos3.arn
+}
+
+############
 resource "aws_iam_role_policy_attachment" "attach-first" {
   role       = aws_iam_role.nextcloud-role.name
   policy_arn = aws_iam_policy.nextcloud-policy.arn
