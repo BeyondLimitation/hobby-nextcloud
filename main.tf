@@ -51,7 +51,7 @@ module "vpc" {
 module "store-metric" {
   source = "terraform-aws-modules/s3-bucket/aws"
   bucket = "lee-bucket4metricstreams"
-  acl = "private"
+  acl    = "private"
 
   tags = {
     "IaCTool" = "Terraform"
@@ -128,15 +128,19 @@ resource "aws_iam_role" "nextcloud-role" {
 }
 
 ## 2022-07-16##
-# Testing....
-# data "aws_cloudwatch_log_group" "flow_log_group" {
-#   name = format("/aws/vpc-flow-log/%s", module.vpc.vpc_id)
-# }
+# Get Amazon CloudWatch Log Group name
+data "aws_cloudwatch_log_group" "flow_log_group" {
+  name = format("/aws/vpc-flow-log/%s", module.vpc.vpc_id)
+}
 
-# resource "aws_iam_policy" "MetricStreams-FirehoseToS3"{
-#  name = "MetricStreams-FirehoseToS3"
-#  policy = templatefile("./iam/metricstreams-s3.tpl.json", {region = "var.region", account-id=var.account-id, s3-bucket-arn = module.store-metric.s3_bucket_arn, log-group = data.aws_cloudwatch_log_group.flow_log_group})
-# }
+resource "aws_iam_policy" "MetricStreams-FirehoseToS3" {
+  name   = "MetricStreams-FirehoseToS3"
+  policy = templatefile("./iam/metricstreams-s3.tpl.json", { region = "var.region", account-id = var.account-id, s3-bucket-arn = module.store-metric.s3_bucket_arn, log-group = data.aws_cloudwatch_log_group.flow_log_group.name })
+
+  tags = {
+    "IaCTool" = "Terraform"
+  }
+}
 
 resource "aws_iam_role_policy_attachment" "attach-first" {
   role       = aws_iam_role.nextcloud-role.name
