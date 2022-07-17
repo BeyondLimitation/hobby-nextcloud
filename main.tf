@@ -158,6 +158,24 @@ resource "aws_iam_role_policy_attachment" "kinesis-attach" {
   policy_arn = aws_iam_policy.metricstreams-firehosetos3.arn
 }
 
+# Policy. For CloudWatch
+# resource "aws_iam_policy" "metricstreams-putrecords" {
+#   name = "NextCloud-FirehosePutRecord"
+#   policy = templatefile("./iam/firehose-putrecords.tpl.json", {region = var.region, account-id = var.account-id, kinesis-firehose = })
+
+#   tags = {
+#     "IaCTool" = "Terraform"
+#   }
+# }
+# Role. For CloudWatch
+resource "aws_iam_role" "cloudwatch-role" {
+  name = "NextCloud-CloudWatchRole"
+  assume_role_policy = templatefile("./iam/assumerole-cloudwatch.tpl.json", { account-id = var.account-id })
+
+  tags = {
+    "IaCTool" = "Terraform"
+  }
+}
 ############
 resource "aws_iam_role_policy_attachment" "attach-first" {
   role       = aws_iam_role.nextcloud-role.name
@@ -430,5 +448,20 @@ resource "aws_ssm_association" "run-agent" {
   targets {
     key    = "InstanceIds"
     values = [aws_instance.nextcloud-instance.id]
+  }
+}
+
+## 2022-07-17
+resource "aws_kinesis_firehose_delivery_stream" "nextcloud-stream" {
+  name = "nextcloud-metricstream"
+  destination = "s3"
+
+  s3_configuration {
+    role_arn = aws_iam_role.kinesis-role.arn
+    bucket_arn = module.store-metric.s3_bucket_arn
+  }
+
+  tags = {
+    "IaCTool" = "Terraform"
   }
 }
