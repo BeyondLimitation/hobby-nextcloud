@@ -183,23 +183,6 @@ resource "aws_iam_role_policy_attachment" "cloudwatch-attach" {
   policy_arn = aws_iam_policy.metricstreams-putrecords.arn
 }
 
-resource "aws_cloudwatch_metric_stream" "metric-stream" {
-  name          = "NextCloud-Metric-Stream"
-  role_arn      = aws_iam_role.cloudwatch-role.arn
-  firehose_arn  = aws_kinesis_firehose_delivery_stream.nextcloud-stream.arn
-  output_format = "json"
-
-  include_filter {
-    namespace = "CWAgent"
-  }
-  include_filter {
-    namespace ="AWS/EFS"
-  }
-  include_filter {
-    namespace = "AWS/EC2"
-  }
-}
-
 ############
 resource "aws_iam_role_policy_attachment" "attach-first" {
   role       = aws_iam_role.nextcloud-role.name
@@ -438,6 +421,25 @@ resource "aws_route53_record" "nextcloud" {
 resource "aws_cloudwatch_dashboard" "nextcloud-board" {
   dashboard_name = "NextCloud"
   dashboard_body = templatefile("./cloudwatch/dashboard-nextcloud.tpl.json", { aws-region = var.region, fs-id = aws_efs_file_system.efs4nextcloud.id, instance-id = aws_instance.nextcloud-instance.id, instance-ami = data.aws_ami.nextcloud_ami.id, instance-type = aws_instance.nextcloud-instance.instance_type })
+}
+
+## 2022-07-20
+# Create CloudWatch Metric Stream
+resource "aws_cloudwatch_metric_stream" "metric-stream" {
+  name          = "NextCloud-Metric-Stream"
+  role_arn      = aws_iam_role.cloudwatch-role.arn
+  firehose_arn  = aws_kinesis_firehose_delivery_stream.nextcloud-stream.arn
+  output_format = "json"
+
+  include_filter {
+    namespace = "CWAgent"
+  }
+  include_filter {
+    namespace ="AWS/EFS"
+  }
+  include_filter {
+    namespace = "AWS/EC2"
+  }
 }
 
 # System Manager#
