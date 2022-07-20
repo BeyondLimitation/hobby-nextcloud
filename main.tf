@@ -136,7 +136,7 @@ data "aws_cloudwatch_log_group" "flow_log_group" {
 # Policy Document 
 resource "aws_iam_policy" "metricstreams-firehosetos3" {
   name   = "NextCloud-MetricStreams-FirehoseToS3"
-  policy = templatefile("./iam/metricstreams-s3.tpl.json", { region = "var.region", account-id = var.account-id, s3-bucket-arn = module.store-metric.s3_bucket_arn, log-group = data.aws_cloudwatch_log_group.flow_log_group.name })
+  policy = templatefile("./iam/metricstreams-s3.tpl.json", { region = var.region, account-id = var.account-id, s3-bucket-arn = module.store-metric.s3_bucket_arn, log-group = data.aws_cloudwatch_log_group.flow_log_group.name })
 
   tags = {
     "IaCTool" = "Terraform"
@@ -145,7 +145,7 @@ resource "aws_iam_policy" "metricstreams-firehosetos3" {
 
 # Allow Kinesis Service to assume role
 resource "aws_iam_role" "kinesis-role" {
-  name = "NextCloud-Kinesis-AssumeRole"
+  name               = "NextCloud-Kinesis-AssumeRole"
   assume_role_policy = file("./iam/assumerole-kinesis.json")
 
   tags = {
@@ -159,23 +159,47 @@ resource "aws_iam_role_policy_attachment" "kinesis-attach" {
 }
 
 # Policy. For CloudWatch
-# resource "aws_iam_policy" "metricstreams-putrecords" {
-#   name = "NextCloud-FirehosePutRecord"
-#   policy = templatefile("./iam/firehose-putrecords.tpl.json", {region = var.region, account-id = var.account-id, kinesis-firehose = })
+resource "aws_iam_policy" "metricstreams-putrecords" {
+  name   = "NextCloud-FirehosePutRecord"
+  policy = templatefile("./iam/firehose-putrecords.tpl.json", { firehose = aws_kinesis_firehose_delivery_stream.nextcloud-stream.arn })
 
-#   tags = {
-#     "IaCTool" = "Terraform"
-#   }
-# }
+  tags = {
+    "IaCTool" = "Terraform"
+  }
+}
+
 # Role. For CloudWatch
 resource "aws_iam_role" "cloudwatch-role" {
-  name = "NextCloud-CloudWatchRole"
+  name               = "NextCloud-CloudWatchRole"
   assume_role_policy = templatefile("./iam/assumerole-cloudwatch.tpl.json", { account-id = var.account-id })
 
   tags = {
     "IaCTool" = "Terraform"
   }
 }
+
+resource "aws_iam_role_policy_attachment" "cloudwatch-attach" {
+  role       = aws_iam_role.cloudwatch-role.name
+  policy_arn = aws_iam_policy.metricstreams-putrecords.arn
+}
+
+resource "aws_cloudwatch_metric_stream" "metric-stream" {
+  name          = "NextCloud-Metric-Stream"
+  role_arn      = aws_iam_role.cloudwatch-role.arn
+  firehose_arn  = aws_kinesis_firehose_delivery_stream.nextcloud-stream.arn
+  output_format = "json"
+
+  include_filter {
+    namespace = "CWAgent"
+  }
+  include_filter {
+    namespace ="AWS/EFS"
+  }
+  include_filter {
+    namespace = "AWS/EC2"
+  }
+}
+
 ############
 resource "aws_iam_role_policy_attachment" "attach-first" {
   role       = aws_iam_role.nextcloud-role.name
@@ -453,11 +477,11 @@ resource "aws_ssm_association" "run-agent" {
 
 ## 2022-07-17
 resource "aws_kinesis_firehose_delivery_stream" "nextcloud-stream" {
-  name = "nextcloud-metricstream"
+  name        = "nextcloud-metricstream"
   destination = "s3"
 
   s3_configuration {
-    role_arn = aws_iam_role.kinesis-role.arn
+    role_arn   = aws_iam_role.kinesis-role.arn
     bucket_arn = module.store-metric.s3_bucket_arn
   }
 

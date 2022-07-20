@@ -8,7 +8,7 @@
                 "firehose:PutRecordBatch"
             ],
             "Resource": [
-                "arn:aws:firehose:${region}:${account-id}:deliverystream/${kinesis-firehose}"
+                "${firehose}"
             ]
         }
     ]
