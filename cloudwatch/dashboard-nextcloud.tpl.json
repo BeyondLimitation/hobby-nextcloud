@@ -89,7 +89,7 @@
             "width":6,"height":6,
             "properties":{
                 "view": "table",
-                "query": "SOURCE '${log-group}' | filter interfaceId=\"eni-0a1199e574b781a22\" and action=\"ACCEPT\" \n | stats sum(bytes) as byteTransferred by srcAddr, dstAddr, bin(1h) \n | sort byteTransferred desc \n | limit 20 ",
+                "query": "SOURCE '${log-group}' | filter interfaceId=\"eni-0a1199e574b781a22\" and action=\"ACCEPT\"\n| stats sum(bytes) as byteTransferred by srcAddr, dstAddr, bin(1h)\n| sort byteTransferred desc\n| limit 20",
                 "region": "ap-northeast-2",
                 "title": "NextCloud 인스턴스 데이터 전송량 TOP 20.(1시간)",
                 "period": 300
