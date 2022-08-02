@@ -437,9 +437,6 @@ resource "aws_cloudwatch_metric_stream" "metric-stream" {
   include_filter {
     namespace ="AWS/EFS"
   }
-  include_filter {
-    namespace = "AWS/EC2"
-  }
 }
 
 # System Manager#
