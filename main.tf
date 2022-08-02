@@ -420,7 +420,7 @@ resource "aws_route53_record" "nextcloud" {
 # Add a "NextCloud" Dashboard
 resource "aws_cloudwatch_dashboard" "nextcloud-board" {
   dashboard_name = "NextCloud"
-  dashboard_body = templatefile("./cloudwatch/dashboard-nextcloud.tpl.json", { aws-region = var.region, fs-id = aws_efs_file_system.efs4nextcloud.id, instance-id = aws_instance.nextcloud-instance.id, instance-ami = data.aws_ami.nextcloud_ami.id, instance-type = aws_instance.nextcloud-instance.instance_type })
+  dashboard_body = templatefile("./cloudwatch/dashboard-nextcloud.tpl.json", { aws-region = var.region, fs-id = aws_efs_file_system.efs4nextcloud.id, instance-id = aws_instance.nextcloud-instance.id, instance-ami = data.aws_ami.nextcloud_ami.id, instance-type = aws_instance.nextcloud-instance.instance_type, log-group = data.aws_cloudwatch_log_group.flow_log_group.name })
 }
 
 ## 2022-07-20
@@ -435,7 +435,7 @@ resource "aws_cloudwatch_metric_stream" "metric-stream" {
     namespace = "CWAgent"
   }
   include_filter {
-    namespace ="AWS/EFS"
+    namespace = "AWS/EFS"
   }
 }
 
@@ -480,8 +480,8 @@ resource "aws_kinesis_firehose_delivery_stream" "nextcloud-stream" {
   destination = "s3"
 
   s3_configuration {
-    role_arn   = aws_iam_role.kinesis-role.arn
-    bucket_arn = module.store-metric.s3_bucket_arn
+    role_arn        = aws_iam_role.kinesis-role.arn
+    bucket_arn      = module.store-metric.s3_bucket_arn
     buffer_interval = 900
   }
 

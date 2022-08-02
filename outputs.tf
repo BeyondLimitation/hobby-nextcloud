@@ -27,3 +27,8 @@ output "my_ami" {
   description = "내가 구독한 IVCISA의 Nextcloud AMI."
   value       = data.aws_ami.nextcloud_ami.id
 }
+
+output "log_group" {
+  description = "CloudWatch Log Group의 전체 이름"
+  value       =  data.aws_cloudwatch_log_group.flow_log_group.name
+}
