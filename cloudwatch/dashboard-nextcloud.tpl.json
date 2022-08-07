@@ -99,10 +99,10 @@
             "x":8,"y":16,
             "width":6,"height":6,
             "properties":{
-                "view": "bar",
+                "view": "pie",
                 "query": "SOURCE '${log-group}' | fields @timestamp, @message\n| filter interfaceId=\"eni-0a1199e574b781a22\"\n| parse @message /(?<@ip>^*([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})[.]*)/\n|stats count() as requestCount by @ip, bin(1h)\n| sort requestCount desc\n| limit 20",
                 "region": "ap-northeast-2",
-                "title": "NextCloud 인스턴스 데이터 전송량 TOP 20.(1시간)",
+                "title": "접속요청이 가장 많은 IP Address.(1시간)",
                 "period": 300
             }
         }
