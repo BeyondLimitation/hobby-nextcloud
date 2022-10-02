@@ -118,6 +118,11 @@ resource "aws_iam_policy" "nextcloud-policy" {
 
 }
 
+resource "aws_iam_policy" "certbot" {
+  name   = "Certbot-Policy"
+  policy = file("./iam/nextcloud-certbot.json")
+}
+
 resource "aws_iam_role" "nextcloud-role" {
   name               = "NextCloud_InstanceRole"
   assume_role_policy = file("./iam/assumerolepolicy.json")
@@ -200,6 +205,10 @@ resource "aws_iam_role_policy_attachment" "attach-third" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
+resource "aws_iam_role_policy_attachment" "attach-fourth" {
+  role       = aws_iam_role.nextcloud-role.name
+  policy_arn = aws_iam_policy.certbot.arn
+}
 # This resource will be used for EC2 Instance.
 resource "aws_iam_instance_profile" "nextcloud-instance-profile" {
   name = "NextCloud-Profile"

@@ -30,5 +30,5 @@ output "my_ami" {
 
 output "log_group" {
   description = "CloudWatch Log Group의 전체 이름"
-  value       =  data.aws_cloudwatch_log_group.flow_log_group.name
+  value       = data.aws_cloudwatch_log_group.flow_log_group.name
 }
