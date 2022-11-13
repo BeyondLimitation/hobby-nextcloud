@@ -330,22 +330,23 @@ resource "aws_eip" "eip" {
   }
 }
 
-# Get AMI.
-data "aws_ami" "nextcloud_ami" {
-  most_recent = true
+# 이 AMI는 더 이상 지원되지 않음. AWS MarketPlace에서 제거됨.
+# data "aws_ami" "nextcloud_ami" {
+#   most_recent = true
 
-  owners = ["679593333241"] # IVCISA
+#   owners = ["679593333241"] # IVCISA
 
-  filter {
-    name   = "name"
-    values = ["ivcisa-nextcloud-20.0.0-linux-ubuntu*"]
-  }
+#   filter {
+#     name   = "name"
+#     values = ["ivcisa-nextcloud-20.0.0-linux-ubuntu*"]
+#   }
 
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}
+#   filter {
+#     name   = "virtualization-type"
+#     values = ["hvm"]
+#   }
+
+# }
 
 # Cloud-init user_data. Create folder for EFS mount point.
 data "template_cloudinit_config" "config" {
@@ -359,7 +360,7 @@ data "template_cloudinit_config" "config" {
 
 # Create Instance
 resource "aws_instance" "nextcloud-instance" {
-  ami           = data.aws_ami.nextcloud_ami.id
+  ami           = "ami-07d16c043aa8e5153"
   instance_type = "t3.micro"
   key_name      = "key4test"
 
@@ -429,7 +430,7 @@ resource "aws_route53_record" "nextcloud" {
 # Add a "NextCloud" Dashboard
 resource "aws_cloudwatch_dashboard" "nextcloud-board" {
   dashboard_name = "NextCloud"
-  dashboard_body = templatefile("./cloudwatch/dashboard-nextcloud.tpl.json", { aws-region = var.region, fs-id = aws_efs_file_system.efs4nextcloud.id, instance-id = aws_instance.nextcloud-instance.id, instance-ami = data.aws_ami.nextcloud_ami.id, instance-type = aws_instance.nextcloud-instance.instance_type, log-group = data.aws_cloudwatch_log_group.flow_log_group.name })
+  dashboard_body = templatefile("./cloudwatch/dashboard-nextcloud.tpl.json", { aws-region = var.region, fs-id = aws_efs_file_system.efs4nextcloud.id, instance-id = aws_instance.nextcloud-instance.id, instance-ami = "ami-07d16c043aa8e5153", instance-type = aws_instance.nextcloud-instance.instance_type, log-group = data.aws_cloudwatch_log_group.flow_log_group.name })
 }
 
 ## 2022-07-20

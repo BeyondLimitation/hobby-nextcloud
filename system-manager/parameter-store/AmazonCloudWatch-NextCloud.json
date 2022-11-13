@@ -1,6 +1,6 @@
 {
 	"agent": {
-		"metrics_collection_interval": 1200,
+		"metrics_collection_interval": 2700,
 		"run_as_user": "cwagent"
 	},
 	"metrics": {
@@ -23,7 +23,7 @@
 					"cpu_usage_user",
 					"cpu_usage_system"
 				],
-				"metrics_collection_interval": 600,
+				"metrics_collection_interval": 2700,
 				"resources": [
 					"*"
 				],
@@ -34,16 +34,7 @@
 					"used_percent",
 					"inodes_free"
 				],
-				"metrics_collection_interval": 600,
-				"resources": [
-					"*"
-				]
-			},
-			"diskio": {
-				"measurement": [
-					"io_time"
-				],
-				"metrics_collection_interval": 600,
+				"metrics_collection_interval": 2700,
 				"resources": [
 					"*"
 				]
@@ -52,13 +43,7 @@
 				"measurement": [
 					"mem_used_percent"
 				],
-				"metrics_collection_interval": 600
-			},
-			"swap": {
-				"measurement": [
-					"swap_used_percent"
-				],
-				"metrics_collection_interval": 600
+				"metrics_collection_interval": 2700
 			}
 		}
 	}
