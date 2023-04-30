@@ -53,6 +53,15 @@ module "store-metric" {
   bucket = "lee-bucket4metricstreams"
   acl    = "private"
 
+  lifecycle_rule = [{
+    id      = "Log-autodelete"
+    enabled = true
+    expiration = {
+      days                         = 180
+      expired_object_delete_marker = true
+    }
+  }]
+
   tags = {
     "IaCTool" = "Terraform"
   }
