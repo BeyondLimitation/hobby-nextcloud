@@ -1,16 +1,3 @@
-terraform {
-  backend "remote" {
-    organization = "Lee-personal-project"
-    workspaces {
-      name = "hobby-nextcloud"
-    }
-  }
-}
-
-provider "aws" {
-  region = var.region
-}
-
 ### NextCloud Infra ###
 # Create VPC, 2 public and 2 private subnets.
 module "vpc" {
