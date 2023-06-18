@@ -66,3 +66,38 @@ resource "aws_ssm_association" "install-agent" {
     values = [aws_instance.nextcloud-instance.id]
   }
 }
+
+resource "aws_ssm_parameter" "agent-config" {
+  # name must starts with "AmazonCloudWatch-"
+  name  = "AmazonCloudWatch-NextCloud"
+  type  = "String"
+  value = file("./system-manager/parameter-store/AmazonCloudWatch-NextCloud.json")
+
+  tags = {
+    "IaCTool" = "Terraform"
+  }
+}
+
+# System Manager#
+# Upload 'config.json' file to Parameter Store
+
+# Run Command
+resource "aws_ssm_document" "run-agent" {
+  name          = "NextCloud-Run-CloudWatchAgent"
+  document_type = "Command"
+
+  content = templatefile("./system-manager/document-manageagent.tpl.json", { action = "fetch-config", mode = "ec2", cwaconfig = aws_ssm_parameter.agent-config.name })
+
+  tags = {
+    IaCTool = "Terraform"
+  }
+}
+
+resource "aws_ssm_association" "run-agent" {
+  name = aws_ssm_document.run-agent.name
+
+  targets {
+    key    = "InstanceIds"
+    values = [aws_instance.nextcloud-instance.id]
+  }
+}

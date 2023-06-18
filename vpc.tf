@@ -32,3 +32,41 @@ module "vpc" {
     IaCTool = "Terraform"
   }
 }
+
+# Create Security Group#
+# Security group module 
+module "nextcloud-ng" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "4.4.0"
+
+  name        = "nextcloud-ng"
+  description = "Security group for nextcloud application. Allow ssh, http/https and nfs traffics inbound and outbound"
+  vpc_id      = module.vpc.vpc_id
+
+  # 인바운드 규칙
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+  ingress_rules       = ["https-443-tcp", "http-80-tcp", "ssh-tcp"]
+  ingress_with_cidr_blocks = [
+    { # Rule 1
+      rule        = "nfs-tcp"
+      cidr_blocks = module.vpc.private_subnets_cidr_blocks[0]
+    },
+    { # Rule 2
+      rule        = "nfs-tcp"
+      cidr_blocks = module.vpc.public_subnets_cidr_blocks[0]
+    }
+  ]
+  # 아웃바운드 규칙
+  egress_cidr_blocks = ["0.0.0.0/0"]
+  egress_rules       = ["https-443-tcp", "http-80-tcp", "ssh-tcp"]
+  egress_with_cidr_blocks = [
+    { # Rule 1
+      rule        = "nfs-tcp"
+      cidr_blocks = module.vpc.private_subnets_cidr_blocks[0]
+    }
+  ]
+
+  tags = {
+    IaCTool = "Terraform"
+  }
+}
