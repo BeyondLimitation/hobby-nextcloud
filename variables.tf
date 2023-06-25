@@ -27,3 +27,9 @@ variable "private_subnets" {
   type        = list(string)
   description = "VPC의 Private Subnet들."
 }
+
+variable "email" {
+  type        = string
+  description = "Address of the email"
+  sensitive   = true
+}     
