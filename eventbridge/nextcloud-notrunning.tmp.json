@@ -1,0 +1,8 @@
+{
+    "source": ["aws.ec2"],
+    "detail-type": ["EC2 Instance State-change Notification"],
+    "detail": {
+      "state": ["shutting-down", "stopping", "stopped", "terminated"],
+      "instance-id": ["'${nextcloud-instance}'"]
+    }
+  }
