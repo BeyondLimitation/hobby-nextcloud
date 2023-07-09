@@ -1,0 +1,38 @@
+{
+    "Version": "2012-10-17",
+    "Id": "Allow_Eventbridge",
+    "Statement": [
+      {
+        "Sid": "Allow",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "*"
+        },
+        "Action": [
+          "SNS:GetTopicAttributes",
+          "SNS:SetTopicAttributes",
+          "SNS:AddPermission",
+          "SNS:RemovePermission",
+          "SNS:DeleteTopic",
+          "SNS:Subscribe",
+          "SNS:ListSubscriptionsByTopic",
+          "SNS:Publish"
+        ],
+        "Resource": "${nextcloud-notrunning}",
+        "Condition": {
+          "StringEquals": {
+            "AWS:SourceOwner": "345003923266"
+          }
+        }
+      },
+      {
+        "Sid": "AWSEvents_Send_NextCloud_Status",
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "events.amazonaws.com"
+        },
+        "Action": "sns:Publish",
+        "Resource": "${nextcloud-notrunning}"
+      }
+    ]
+  }
