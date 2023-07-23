@@ -2,8 +2,7 @@
 # Create VPC, 2 public and 2 private subnets.
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "3.11.0"
-
+  version = "5.1.0"
   # Note! Internet Gateway automatically created with same name of the VPC. Then it will be attached to this VPC.
   name = "nextcloud-terraform"
 
