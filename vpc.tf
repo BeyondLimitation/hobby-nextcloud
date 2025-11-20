@@ -2,7 +2,7 @@
 # Create VPC, 2 public and 2 private subnets.
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "5.1.0"
+  version = "6.5.1"
   # Note! Internet Gateway automatically created with same name of the VPC. Then it will be attached to this VPC.
   name = "nextcloud-terraform"
 
@@ -36,7 +36,7 @@ module "vpc" {
 # Security group module 
 module "nextcloud-ng" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "4.4.0"
+  version = "5.3.1"
 
   name        = "nextcloud-ng"
   description = "Security group for nextcloud application. Allow ssh, http/https and nfs traffics inbound and outbound"
