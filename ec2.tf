@@ -1,7 +1,7 @@
 # Create EC2 Instance #
 # Instance Network Setting. Associate AWS Elastic IP to instance.
 resource "aws_eip" "eip" {
-  vpc = true
+  domain = "vpc"
 
   instance   = aws_instance.nextcloud-instance.id
   depends_on = [module.vpc]

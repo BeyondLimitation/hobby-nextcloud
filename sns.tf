@@ -1,6 +1,6 @@
 # Create SNS Topic
 resource "aws_sns_topic" "nextcloud-notrunning" {
-  name   = "NextCloud-NotRunning"
+  name = "NextCloud-NotRunning"
 
   tags = {
     "IaCTool" = "Terraform"
@@ -8,7 +8,7 @@ resource "aws_sns_topic" "nextcloud-notrunning" {
 }
 
 resource "aws_sns_topic_policy" "proper-one" {
-  arn = aws_sns_topic.nextcloud-notrunning.arn
+  arn    = aws_sns_topic.nextcloud-notrunning.arn
   policy = templatefile("./iam/sns/allow_events.tpl.json", { nextcloud-notrunning = aws_sns_topic.nextcloud-notrunning.arn })
 }
 
