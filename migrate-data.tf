@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "efs2s3" {
-  bucket = "lee-migration"
+  bucket = "lee-345003923266-migration"
 
   region = var.region
 
