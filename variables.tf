@@ -32,4 +32,9 @@ variable "email" {
   type        = string
   description = "Address of the email"
   sensitive   = true
-}     
+}
+
+variable "role" {
+  type        = string
+  description = "데이터 마이그레이션을 위한 IAM 역할 이름"
+}
