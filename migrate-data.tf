@@ -23,6 +23,15 @@ resource "aws_datasync_location_efs" "datasync-mount-target-src" {
   }
 }
 
+## Create Role for DataSync
+resource "aws_iam_role" "nextcloud-migration-access" {
+  name               = var.role
+  assume_role_policy = file("./iam/assumerole-datasync.json")
+  tags = {
+    "IaCTool" : "Terraform"
+  }
+}
+
 # resource "aws_datasync_location_s3" "datasync-mount-target-dest" {
 #   s3_bucket_arn = aws_s3_bucket.efs2s3.arn
 #   subdirectory = ""
@@ -31,3 +40,4 @@ resource "aws_datasync_location_efs" "datasync-mount-target-src" {
 #     bucket_access_role_arn = ""
 #   }
 # }
+
