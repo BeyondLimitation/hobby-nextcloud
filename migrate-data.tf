@@ -31,7 +31,21 @@ resource "aws_iam_role" "nextcloud-migration-access" {
     "IaCTool" : "Terraform"
   }
 }
+# Create Policy Document for "nextcloud-migration-access"
+resource "aws_iam_policy" "nextcloud-migration-access" {
+  name   = "nextcloud-migration-access-policy"
+  policy = templatefile("./iam/s3/migration.tpl.json", { bucket-name = "lee-345003923266-migration" })
 
+  description = "This gives an access to the bucket 'lee-345003923266-migration'"
+  tags = {
+    "IaCTool" : "Terraform"
+  }
+}
+# Attach Policy 'extcloud-migration-access-policy' to the role 'nextcloud-migration-access'
+resource "aws_iam_role_policy_attachment" "attach-policy" {
+  role       = aws_iam_role.nextcloud-migration-access.name
+  policy_arn = aws_iam_policy.nextcloud-migration-access.arn
+}
 # resource "aws_datasync_location_s3" "datasync-mount-target-dest" {
 #   s3_bucket_arn = aws_s3_bucket.efs2s3.arn
 #   subdirectory = ""
