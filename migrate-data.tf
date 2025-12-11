@@ -85,3 +85,9 @@ resource "aws_datasync_location_s3" "datasync-dest" {
   }
 }
 
+# Create Datasync task
+resource "aws_datasync_task" "start-migration" {
+  name                     = "migrate-data"
+  source_location_arn      = aws_datasync_location_efs.datasync-src.arn
+  destination_location_arn = aws_datasync_location_s3.datasync-dest.arn
+}
