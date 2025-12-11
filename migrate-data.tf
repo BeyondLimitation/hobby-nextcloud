@@ -46,12 +46,42 @@ resource "aws_iam_role_policy_attachment" "attach-policy" {
   role       = aws_iam_role.nextcloud-migration-access.name
   policy_arn = aws_iam_policy.nextcloud-migration-access.arn
 }
-# resource "aws_datasync_location_s3" "datasync-mount-target-dest" {
-#   s3_bucket_arn = aws_s3_bucket.efs2s3.arn
-#   subdirectory = ""
 
-#   s3_config {
-#     bucket_access_role_arn = ""
-#   }
-# }
+resource "aws_iam_role_policy_attachment" "attach-policy4datasync" {
+  role       = aws_iam_role.nextcloud-migration-access.name
+  policy_arn = aws_iam_policy.nextcloud-policy.arn
+}
+# DataSync. Create Location
+
+# Create source
+resource "aws_datasync_location_efs" "datasync-src" {
+  # File System ARN
+  efs_file_system_arn = aws_efs_mount_target.mount_target.file_system_arn
+  # Role
+  file_system_access_role_arn = aws_iam_role.nextcloud-migration-access.arn
+  # Config for EC2
+  ec2_config {
+    security_group_arns = [module.nextcloud-ng.security_group_arn]
+    subnet_arn          = module.vpc.private_subnet_arns[0]
+  }
+  # Set 'in-transit' encryption
+  in_transit_encryption = "TLS1_2"
+  tags = {
+    "IaCTool" : "Terraform"
+  }
+}
+
+# Create destination
+resource "aws_datasync_location_s3" "datasync-dest" {
+  s3_bucket_arn = aws_s3_bucket.efs2s3.arn
+  subdirectory  = ""
+
+  s3_config {
+    bucket_access_role_arn = aws_iam_role.nextcloud-migration-access.arn
+  }
+
+  tags = {
+    "IaCTool" : "Terraform"
+  }
+}
 
