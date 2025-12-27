@@ -34,7 +34,7 @@ resource "aws_instance" "nextcloud-instance" {
   iam_instance_profile = aws_iam_instance_profile.nextcloud-instance-profile.name
 
   # Enable EC2 Termination Protection
-  disable_api_termination = true
+  disable_api_termination = false
 
   # Create Directory. EFS 마운트에 쓸 디랙토리가 생성됨.
   user_data_base64 = data.template_cloudinit_config.config.rendered
