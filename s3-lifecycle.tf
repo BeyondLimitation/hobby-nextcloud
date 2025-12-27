@@ -13,6 +13,7 @@ module "store-metric" {
     }
   }]
 
+  force_destroy = true
   tags = {
     "IaCTool" = "Terraform"
   }

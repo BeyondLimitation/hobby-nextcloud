@@ -4,9 +4,12 @@ resource "aws_s3_bucket" "efs2s3" {
 
   region = var.region
 
+  force_destroy = true
+
   tags = {
     "IaCTool" = "Terraform"
   }
+
 }
 # S3 Bucket 정책.
 resource "aws_s3_bucket_policy" "lee-345003923266-migration" {
